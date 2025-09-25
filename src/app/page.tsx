@@ -2,10 +2,18 @@
 
 import WebGLBackground from '@/components/WebGLBackground';
 import AgendaSection from '@/components/AgendaSection';
+import SignupForm from '@/components/SignupForm';
 import Image from 'next/image';
+import { useState } from 'react';
 
 export default function Home() {
+  const [showSignupForm, setShowSignupForm] = useState(false)
+
   const scrollToSection = (sectionId: string) => {
+    if (sectionId === 'signup') {
+      setShowSignupForm(true)
+      return
+    }
     console.log('Scrolling to section:', sectionId);
 
     // Try immediate scroll
@@ -558,6 +566,11 @@ export default function Home() {
           </p>
         </div>
       </footer>
+
+      {/* Signup Form Modal */}
+      {showSignupForm && (
+        <SignupForm onClose={() => setShowSignupForm(false)} />
+      )}
     </div>
   );
 }
