@@ -1,101 +1,88 @@
-import { createCanvas, loadImage } from 'canvas'
-import QRCode from 'qrcode'
-
+// Cloudflare Workers compatible namecard generation using SVG
 interface NamecardData {
-  name: string
-  email: string
-  linkedinProfile?: string
-  eventName: string
-  eventDate: string
-  eventLocation: string
+  name: string;
+  email: string;
+  linkedinProfile?: string;
+  eventName: string;
+  eventDate: string;
+  eventLocation: string;
 }
 
-export async function generateNamecard(data: NamecardData): Promise<Buffer> {
-  const canvas = createCanvas(800, 500)
-  const ctx = canvas.getContext('2d')
+export async function generateNamecard(
+  data: NamecardData
+): Promise<Buffer> {
+  // Generate QR code data URL (this still works in Cloudflare)
+  const qrData = data.linkedinProfile || `mailto:${data.email}`;
+  let qrCodeSvg = '';
 
-  // Background gradient
-  const gradient = ctx.createLinearGradient(0, 0, 800, 500)
-  gradient.addColorStop(0, '#1a1a2e')
-  gradient.addColorStop(0.5, '#16213e')
-  gradient.addColorStop(1, '#0f3460')
-  
-  ctx.fillStyle = gradient
-  ctx.fillRect(0, 0, 800, 500)
-
-  // Border
-  ctx.strokeStyle = '#8b5cf6'
-  ctx.lineWidth = 4
-  ctx.strokeRect(20, 20, 760, 460)
-
-  // Event title
-  ctx.fillStyle = '#ffffff'
-  ctx.font = 'bold 32px Arial'
-  ctx.textAlign = 'center'
-  ctx.fillText('VIBE CODING', 400, 80)
-
-  // Decorative line
-  ctx.strokeStyle = '#8b5cf6'
-  ctx.lineWidth = 2
-  ctx.beginPath()
-  ctx.moveTo(200, 100)
-  ctx.lineTo(600, 100)
-  ctx.stroke()
-
-  // Attendee name
-  ctx.fillStyle = '#10b981'
-  ctx.font = 'bold 36px Arial'
-  ctx.textAlign = 'center'
-  ctx.fillText(data.name, 400, 170)
-
-  // Event details
-  ctx.fillStyle = '#ffffff'
-  ctx.font = '18px Arial'
-  ctx.textAlign = 'left'
-  ctx.fillText(data.eventName, 60, 240)
-  ctx.fillText(`📅 ${data.eventDate}`, 60, 270)
-  ctx.fillText(`📍 ${data.eventLocation}`, 60, 300)
-
-  // LinkedIn profile if provided
-  if (data.linkedinProfile) {
-    ctx.fillStyle = '#0077b5'
-    ctx.font = '16px Arial'
-    ctx.fillText('🔗 LinkedIn:', 60, 340)
-    ctx.fillStyle = '#ffffff'
-    ctx.font = '14px Arial'
-    ctx.fillText(data.linkedinProfile, 150, 340)
+  try {
+    // Use QRCode library to generate SVG instead of canvas
+    const QRCode = await import('qrcode');
+    qrCodeSvg = await QRCode.toString(qrData, {
+      type: 'svg',
+      color: {
+        dark: '#ffffff',
+        light: '#00000000', // transparent background
+      },
+      width: 300,
+      margin: 0,
+    });
+  } catch (error) {
+    console.warn('QR code generation failed, using placeholder');
+    qrCodeSvg = `<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+      <rect width="300" height="300" fill="#ffffff"/>
+      <text x="150" y="150" text-anchor="middle" font-family="Arial" font-size="24" fill="#000000">QR</text>
+    </svg>`;
   }
 
-  // Email
-  ctx.fillStyle = '#ffffff'
-  ctx.font = '16px Arial'
-  ctx.fillText(`📧 ${data.email}`, 60, data.linkedinProfile ? 370 : 340)
+  // Create namecard as SVG
+  const svgNamecard = `<svg width="800" height="500" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#1a1a2e"/>
+        <stop offset="50%" style="stop-color:#16213e"/>
+        <stop offset="100%" style="stop-color:#0f3460"/>
+      </linearGradient>
+    </defs>
 
-  // Generate QR code for LinkedIn profile (if available) or email
-  const qrData = data.linkedinProfile || `mailto:${data.email}`
-  const qrCodeDataUrl = await QRCode.toDataURL(qrData, {
-    color: {
-      dark: '#ffffff',
-      light: '#0000'
-    },
-    width: 120
-  })
+    <!-- Background -->
+    <rect width="800" height="500" fill="url(#bg-gradient)"/>
 
-  // Load and draw QR code
-  const qrImage = await loadImage(qrCodeDataUrl)
-  ctx.drawImage(qrImage, 620, 300, 120, 120)
+    <!-- Border -->
+    <rect x="20" y="20" width="760" height="460" fill="none" stroke="#8b5cf6" stroke-width="4"/>
 
-  // QR code label
-  ctx.fillStyle = '#9ca3af'
-  ctx.font = '12px Arial'
-  ctx.textAlign = 'center'
-  ctx.fillText(data.linkedinProfile ? 'Scan for LinkedIn' : 'Scan to email', 680, 440)
+    <!-- Event title -->
+    <text x="400" y="80" text-anchor="middle" font-family="Arial" font-size="32" font-weight="bold" fill="#ffffff">VIBE CODING WORKSHOP - 6 Nov 2025</text>
 
-  // Footer
-  ctx.fillStyle = '#6b7280'
-  ctx.font = '12px Arial'
-  ctx.textAlign = 'center'
-  ctx.fillText('Powered by Lovable • Sponsored by Cloudflare • Organized by IndoTechSg', 400, 470)
+    <!-- Attendee name - HUGE -->
+    <text x="400" y="140" text-anchor="middle" font-family="Arial" font-size="48" font-weight="bold" fill="#10b981">${data.name.toUpperCase()}</text>
 
-  return canvas.toBuffer('image/png')
+    <!-- Email -->
+    <text x="400" y="200" text-anchor="middle" font-family="Arial" font-size="28" fill="#ffffff"> ${
+      data.email
+    }</text>
+
+    <!-- QR Code - Large (60% coverage) -->
+    <g transform="translate(320, 270) scale(5)">
+      ${qrCodeSvg.replace(/<svg[^>]*>/, '').replace('</svg>', '')}
+    </g>
+  </svg>`;
+
+  // For email compatibility, convert SVG to PNG using a simple approach
+  // Since we need PNG for email attachments, we'll use a different approach
+  try {
+    // Try to use sharp for SVG to PNG conversion if available
+    const sharp = await import('sharp').catch(() => null);
+    if (sharp) {
+      return await sharp
+        .default(Buffer.from(svgNamecard, 'utf-8'))
+        .png()
+        .toBuffer();
+    }
+  } catch (error) {
+    console.log('Sharp not available, falling back to SVG');
+  }
+
+  // Fallback: return SVG as buffer (some email clients support it)
+  return Buffer.from(svgNamecard, 'utf-8');
 }

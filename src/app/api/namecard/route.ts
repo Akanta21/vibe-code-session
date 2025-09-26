@@ -21,8 +21,8 @@ export async function POST(request: NextRequest) {
     return new NextResponse(namecard as BodyInit, {
       status: 200,
       headers: {
-        'Content-Type': 'image/png',
-        'Content-Disposition': `attachment; filename="${name.replace(/[^a-zA-Z0-9]/g, '_')}_namecard.png"`,
+        'Content-Type': 'image/svg+xml',
+        'Content-Disposition': `attachment; filename="${name.replace(/[^a-zA-Z0-9]/g, '_')}_namecard.svg"`,
         'Cache-Control': 'no-cache'
       }
     })

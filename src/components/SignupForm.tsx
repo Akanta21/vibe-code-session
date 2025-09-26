@@ -1,28 +1,32 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import Captcha from './Captcha'
+import { useState } from 'react';
+import Captcha from './Captcha';
 
 interface FormData {
-  name: string
-  email: string
-  phone: string
-  linkedinProfile: string
-  hasExperience: boolean
-  toolsUsed: string
-  projectIdea: string
+  name: string;
+  email: string;
+  phone: string;
+  linkedinProfile: string;
+  hasExperience: boolean;
+  toolsUsed: string;
+  projectIdea: string;
 }
 
 interface FormErrors {
-  name?: string
-  email?: string
-  phone?: string
-  linkedinProfile?: string
-  projectIdea?: string
-  captcha?: string
+  name?: string;
+  email?: string;
+  phone?: string;
+  linkedinProfile?: string;
+  projectIdea?: string;
+  captcha?: string;
 }
 
-export default function SignupForm({ onClose }: { onClose: () => void }) {
+export default function SignupForm({
+  onClose,
+}: {
+  onClose: () => void;
+}) {
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
@@ -30,138 +34,160 @@ export default function SignupForm({ onClose }: { onClose: () => void }) {
     linkedinProfile: 'https://linkedin.com/in/',
     hasExperience: false,
     toolsUsed: '',
-    projectIdea: ''
-  })
-  
-  const [errors, setErrors] = useState<FormErrors>({})
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
-  const [captchaVerified, setCaptchaVerified] = useState(false)
-  const [lastSubmissionTime, setLastSubmissionTime] = useState<number>(0)
-  const [spamWarning, setSpamWarning] = useState<string>('')
+    projectIdea: '',
+  });
+
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<
+    'idle' | 'success' | 'error'
+  >('idle');
+  const [captchaVerified, setCaptchaVerified] = useState(false);
+  const [lastSubmissionTime, setLastSubmissionTime] =
+    useState<number>(0);
+  const [spamWarning, setSpamWarning] = useState<string>('');
 
   // Generate kebab-case LinkedIn URL from name
   const generateLinkedInURL = (name: string): string => {
-    if (!name.trim()) return 'https://linkedin.com/in/'
-    
+    if (!name.trim()) return 'https://linkedin.com/in/';
+
     const kebabCase = name
       .toLowerCase()
       .trim()
       .replace(/[^a-zA-Z0-9\s-]/g, '') // Remove special characters
       .replace(/\s+/g, '-') // Replace spaces with hyphens
       .replace(/--+/g, '-') // Replace multiple hyphens with single
-      .replace(/^-|-$/g, '') // Remove leading/trailing hyphens
-    
-    return `https://linkedin.com/in/${kebabCase}`
-  }
-  
+      .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
+
+    return `https://linkedin.com/in/${kebabCase}`;
+  };
 
   // Client-side spam detection
   const detectSpamClient = async (formData: FormData) => {
-    const reasons: string[] = []
-    let score = 0
+    const reasons: string[] = [];
+    let score = 0;
 
     // Basic spam checks
     if (formData.name.length < 2 || formData.name.length > 50) {
-      reasons.push('Invalid name length')
-      score += 2
+      reasons.push('Invalid name length');
+      score += 2;
     }
-    
-    if (formData.projectIdea.length < 10 || formData.projectIdea.length > 500) {
-      reasons.push('Invalid project idea length')
-      score += 2
+
+    if (
+      formData.projectIdea.length < 10 ||
+      formData.projectIdea.length > 500
+    ) {
+      reasons.push('Invalid project idea length');
+      score += 2;
     }
-    
+
     // Check for suspicious patterns
-    const spamKeywords = ['spam', 'test', 'fake', 'bot', 'scam']
-    const textToCheck = `${formData.name} ${formData.projectIdea}`.toLowerCase()
-    
-    spamKeywords.forEach(keyword => {
+    const spamKeywords = ['spam', 'test', 'fake', 'bot', 'scam'];
+    const textToCheck =
+      `${formData.name} ${formData.projectIdea}`.toLowerCase();
+
+    spamKeywords.forEach((keyword) => {
       if (textToCheck.includes(keyword)) {
-        reasons.push(`Suspicious keyword: ${keyword}`)
-        score += 3
+        reasons.push(`Suspicious keyword: ${keyword}`);
+        score += 3;
       }
-    })
+    });
 
     return {
       isSpam: score >= 5,
       reasons,
-      score
-    }
-  }
+      score,
+    };
+  };
 
   const validateForm = (): boolean => {
-    const newErrors: FormErrors = {}
+    const newErrors: FormErrors = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Name is required'
+      newErrors.name = 'Name is required';
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required'
+      newErrors.email = 'Email is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email'
+      newErrors.email = 'Please enter a valid email';
     }
 
     if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required'
+      newErrors.phone = 'Phone number is required';
     } else if (!/^[+]?[\d\s-()]{8,}$/.test(formData.phone)) {
-      newErrors.phone = 'Please enter a valid phone number'
+      newErrors.phone = 'Please enter a valid phone number';
     }
 
     if (!formData.projectIdea.trim()) {
-      newErrors.projectIdea = 'Please tell us about your project idea'
+      newErrors.projectIdea =
+        'Please tell us about your project idea';
     }
 
-    if (formData.linkedinProfile.trim() && !/^https:\/\/(?:www\.)?linkedin\.com\/in\/.+$/.test(formData.linkedinProfile)) {
-      newErrors.linkedinProfile = 'Please enter a valid LinkedIn profile URL (e.g., https://linkedin.com/in/yourname)'
+    if (
+      formData.linkedinProfile.trim() &&
+      !/^https:\/\/(?:www\.)?linkedin\.com\/in\/.+$/.test(
+        formData.linkedinProfile
+      )
+    ) {
+      newErrors.linkedinProfile =
+        'Please enter a valid LinkedIn profile URL (e.g., https://linkedin.com/in/yourname)';
     }
 
     if (!captchaVerified) {
-      newErrors.captcha = 'Please complete the security verification'
+      newErrors.captcha = 'Please complete the security verification';
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const generateReference = (name: string, email: string): string => {
-    const cleanName = name.replace(/[^a-zA-Z]/g, '').toUpperCase()
-    const emailPart = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
-    const timestamp = Date.now().toString().slice(-4)
-    return `${cleanName}_${emailPart}_${timestamp}`
-  }
+    const cleanName = name.replace(/[^a-zA-Z]/g, '').toUpperCase();
+    const emailPart = email
+      .split('@')[0]
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .toUpperCase();
+    const timestamp = Date.now().toString().slice(-4);
+    return `${cleanName}_${emailPart}_${timestamp}`;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
+    e.preventDefault();
+
     // Check for rapid submissions (cooldown period)
-    const now = Date.now()
-    const timeSinceLastSubmission = now - lastSubmissionTime
-    
-    if (timeSinceLastSubmission < 30000) { // 30 seconds cooldown
-      setSpamWarning('Please wait 30 seconds between submissions')
-      return
-    }
-    
-    if (!validateForm()) {
-      return
+    const now = Date.now();
+    const timeSinceLastSubmission = now - lastSubmissionTime;
+
+    if (timeSinceLastSubmission < 30000) {
+      // 30 seconds cooldown
+      setSpamWarning('Please wait 30 seconds between submissions');
+      return;
     }
 
-    setIsSubmitting(true)
-    setSubmitStatus('idle')
-    setSpamWarning('')
-    setLastSubmissionTime(now)
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitStatus('idle');
+    setSpamWarning('');
+    setLastSubmissionTime(now);
 
     try {
-      const reference = generateReference(formData.name, formData.email)
-      
+      const reference = generateReference(
+        formData.name,
+        formData.email
+      );
+
       // Add client-side spam detection
-      const spamCheck = await detectSpamClient(formData)
+      const spamCheck = await detectSpamClient(formData);
       if (spamCheck.isSpam) {
-        setSpamWarning(`Submission blocked: ${spamCheck.reasons.join(', ')}`)
-        setSubmitStatus('error')
-        return
+        setSpamWarning(
+          `Submission blocked: ${spamCheck.reasons.join(', ')}`
+        );
+        setSubmitStatus('error');
+        return;
       }
 
       const response = await fetch('/api/telegram-simple', {
@@ -172,12 +198,12 @@ export default function SignupForm({ onClose }: { onClose: () => void }) {
         body: JSON.stringify({
           formData: { ...formData, reference },
           timestamp: now,
-          userAgent: navigator.userAgent
-        })
-      })
+          userAgent: navigator.userAgent,
+        }),
+      });
 
       if (response.ok) {
-        setSubmitStatus('success')
+        setSubmitStatus('success');
         // Reset form after successful submission
         setFormData({
           name: '',
@@ -186,76 +212,101 @@ export default function SignupForm({ onClose }: { onClose: () => void }) {
           linkedinProfile: 'https://linkedin.com/in/',
           hasExperience: false,
           toolsUsed: '',
-          projectIdea: ''
-        })
-        setCaptchaVerified(false)
+          projectIdea: '',
+        });
+        setCaptchaVerified(false);
       } else {
-        const errorData = await response.json()
+        const errorData = await response.json();
         if (errorData.error === 'rate_limited') {
-          setSpamWarning('Too many submissions. Please try again later.')
+          setSpamWarning(
+            'Too many submissions. Please try again later.'
+          );
         } else if (errorData.error === 'duplicate') {
-          setSpamWarning('You have already registered with this email/phone combination.')
+          setSpamWarning(
+            'You have already registered with this email/phone combination.'
+          );
         } else if (errorData.error === 'spam_detected') {
-          setSpamWarning('Submission flagged as spam. Please review your information.')
+          setSpamWarning(
+            'Submission flagged as spam. Please review your information.'
+          );
         } else {
-          throw new Error('Failed to submit registration')
+          throw new Error('Failed to submit registration');
         }
-        setSubmitStatus('error')
+        setSubmitStatus('error');
       }
     } catch (error) {
-      console.error('Submission error:', error)
-      setSubmitStatus('error')
+      console.error('Submission error:', error);
+      setSubmitStatus('error');
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
-  const handleInputChange = (field: keyof FormData, value: string | boolean) => {
-    const updates: Partial<FormData> = { [field]: value }
-    
+  const handleInputChange = (
+    field: keyof FormData,
+    value: string | boolean
+  ) => {
+    const updates: Partial<FormData> = { [field]: value };
+
     // Auto-generate LinkedIn URL when name changes (only if LinkedIn field is empty or still auto-generated)
     if (field === 'name' && typeof value === 'string') {
-      const currentLinkedIn = formData.linkedinProfile
-      const baseURL = 'https://linkedin.com/in/'
-      
+      const currentLinkedIn = formData.linkedinProfile;
+      const baseURL = 'https://linkedin.com/in/';
+
       // Only update LinkedIn if it's empty or still appears to be auto-generated
-      if (!currentLinkedIn || currentLinkedIn === baseURL || currentLinkedIn.startsWith(baseURL)) {
-        const previousName = formData.name
-        const previousGenerated = previousName ? generateLinkedInURL(previousName) : baseURL
-        
+      if (
+        !currentLinkedIn ||
+        currentLinkedIn === baseURL ||
+        currentLinkedIn.startsWith(baseURL)
+      ) {
+        const previousName = formData.name;
+        const previousGenerated = previousName
+          ? generateLinkedInURL(previousName)
+          : baseURL;
+
         // Only update if current LinkedIn matches the previously generated one
-        if (!currentLinkedIn || currentLinkedIn === baseURL || currentLinkedIn === previousGenerated) {
-          updates.linkedinProfile = generateLinkedInURL(value)
+        if (
+          !currentLinkedIn ||
+          currentLinkedIn === baseURL ||
+          currentLinkedIn === previousGenerated
+        ) {
+          updates.linkedinProfile = generateLinkedInURL(value);
         }
       }
     }
-    
-    setFormData(prev => ({ ...prev, ...updates }))
-    
+
+    setFormData((prev) => ({ ...prev, ...updates }));
+
     // Clear error when user starts typing
     if (errors[field as keyof FormErrors]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }))
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
-  }
+  };
 
   if (submitStatus === 'success') {
     return (
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div className="bg-gray-900 rounded-2xl p-8 max-w-md w-full border border-green-500/30">
+        <div className="bg-gray-900 rounded-xl sm:rounded-2xl p-6 sm:p-8 max-w-md w-full border border-green-500/30">
           <div className="text-center">
-            <div className="text-6xl mb-4">🎉</div>
-            <h3 className="text-2xl font-bold text-white mb-4">Registration Submitted!</h3>
-            <p className="text-gray-300 mb-6">
-              Thank you for registering! We've received your application and will send you payment details shortly.
+            <div className="text-4xl sm:text-6xl mb-3 sm:mb-4">
+              🎉
+            </div>
+            <h3 className="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4">
+              Registration Submitted!
+            </h3>
+            <p className="text-gray-300 mb-4 sm:mb-6 text-sm sm:text-base leading-relaxed">
+              Thank you for registering! We've received your
+              application and will send you payment details shortly.
             </p>
             <button
               onClick={onClose}
-              className="btn-primary"
+              className="btn-primary w-full sm:w-auto"
               style={{
-                background: 'linear-gradient(to right, #059669, #10b981)',
+                background:
+                  'linear-gradient(to right, #059669, #10b981)',
                 padding: '0.75rem 2rem',
                 borderRadius: '0.5rem',
-                fontSize: '1rem',
+                fontSize: '0.875rem',
                 fontWeight: '600',
                 border: 'none',
                 cursor: 'pointer',
@@ -267,39 +318,51 @@ export default function SignupForm({ onClose }: { onClose: () => void }) {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
       {/* Full-screen loading overlay */}
       {isSubmitting && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[60]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-400 border-t-transparent mx-auto mb-6"></div>
-            <p className="text-white text-xl font-semibold">Processing your registration...</p>
-            <p className="text-gray-300 text-base mt-3">Please wait, this may take a moment</p>
-            <div className="mt-6 flex justify-center">
+          <div className="text-center px-4">
+            <div className="animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 border-4 border-purple-400 border-t-transparent mx-auto mb-4 sm:mb-6"></div>
+            <p className="text-white text-lg sm:text-xl font-semibold">
+              Processing your registration...
+            </p>
+            <p className="text-gray-300 text-sm sm:text-base mt-2 sm:mt-3">
+              Please wait, this may take a moment
+            </p>
+            <div className="mt-4 sm:mt-6 flex justify-center">
               <div className="flex space-x-1">
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                <div
+                  className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"
+                  style={{ animationDelay: '0.1s' }}
+                ></div>
+                <div
+                  className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"
+                  style={{ animationDelay: '0.2s' }}
+                ></div>
               </div>
             </div>
           </div>
         </div>
       )}
-      
-      <div className="bg-gray-900 rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-purple-500/30 relative">
+
+      <div className="bg-gray-900 rounded-xl sm:rounded-2xl p-4 sm:p-6 max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto border border-purple-500/30 relative">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">Join the Vibe! 🎨</h2>
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-white">
+            Join the Vibe! 🎨
+          </h2>
           <button
             onClick={onClose}
             disabled={isSubmitting}
-            className={`text-2xl transition-colors ${
-              isSubmitting 
-                ? 'text-gray-600 cursor-not-allowed' 
+            className={`text-xl sm:text-2xl transition-colors ${
+              isSubmitting
+                ? 'text-gray-600 cursor-not-allowed'
                 : 'text-gray-400 hover:text-white'
             }`}
           >
@@ -307,132 +370,185 @@ export default function SignupForm({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-4 sm:space-y-6"
+        >
           {/* Personal Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-white border-b border-gray-700 pb-2">
+          <div className="space-y-3 sm:space-y-4">
+            <h3 className="text-base sm:text-lg font-semibold text-white border-b border-gray-700 pb-2">
               Personal Information
             </h3>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-1 sm:mb-2">
                 Full Name *
               </label>
               <input
                 type="text"
                 value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-                className={`w-full px-4 py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all ${
+                onChange={(e) =>
+                  handleInputChange('name', e.target.value)
+                }
+                className={`w-full px-3 sm:px-4 py-3 sm:py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-base ${
                   errors.name ? 'border-red-500' : 'border-gray-600'
                 }`}
                 placeholder="Enter your full name"
               />
-              {errors.name && <p className="text-red-400 text-sm mt-1">{errors.name}</p>}
+              {errors.name && (
+                <p className="text-red-400 text-sm mt-1">
+                  {errors.name}
+                </p>
+              )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-1 sm:mb-2">
                 Email Address *
               </label>
               <input
                 type="email"
                 value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                className={`w-full px-4 py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all ${
+                onChange={(e) =>
+                  handleInputChange('email', e.target.value)
+                }
+                className={`w-full px-3 sm:px-4 py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-base ${
                   errors.email ? 'border-red-500' : 'border-gray-600'
                 }`}
                 placeholder="your.email@example.com"
               />
-              {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email}</p>}
+              {errors.email && (
+                <p className="text-red-400 text-sm mt-1">
+                  {errors.email}
+                </p>
+              )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-1 sm:mb-2">
                 Phone Number *
               </label>
               <input
                 type="tel"
                 value={formData.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-                className={`w-full px-4 py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all ${
+                onChange={(e) =>
+                  handleInputChange('phone', e.target.value)
+                }
+                className={`w-full px-3 sm:px-4 py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-base ${
                   errors.phone ? 'border-red-500' : 'border-gray-600'
                 }`}
                 placeholder="+65 9123 4567"
               />
-              {errors.phone && <p className="text-red-400 text-sm mt-1">{errors.phone}</p>}
+              {errors.phone && (
+                <p className="text-red-400 text-sm mt-1">
+                  {errors.phone}
+                </p>
+              )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-1 sm:mb-2">
                 LinkedIn Profile (Optional)
               </label>
               <div className="relative">
                 <input
                   type="url"
                   value={formData.linkedinProfile}
-                  onChange={(e) => handleInputChange('linkedinProfile', e.target.value)}
-                  className={`w-full px-4 py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all ${
-                    errors.linkedinProfile ? 'border-red-500' : 'border-gray-600'
+                  onChange={(e) =>
+                    handleInputChange(
+                      'linkedinProfile',
+                      e.target.value
+                    )
+                  }
+                  className={`w-full px-3 sm:px-4 py-3 pr-10 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-base ${
+                    errors.linkedinProfile
+                      ? 'border-red-500'
+                      : 'border-gray-600'
                   }`}
                   placeholder="https://linkedin.com/in/your-name"
                 />
                 <div className="absolute right-3 top-3 text-blue-400">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.338 16.338H13.67V12.16c0-.995-.017-2.277-1.387-2.277-1.39 0-1.601 1.086-1.601 2.207v4.248H8.014v-8.59h2.559v1.174h.037c.356-.675 1.227-1.387 2.526-1.387 2.703 0 3.203 1.778 3.203 4.092v4.711zM5.005 6.575a1.548 1.548 0 11-.003-3.096 1.548 1.548 0 01.003 3.096zm-1.337 9.763H6.34v-8.59H3.667v8.59zM17.668 1H2.328C1.595 1 1 1.581 1 2.298v15.403C1 18.418 1.595 19 2.328 19h15.34c.734 0 1.332-.582 1.332-1.299V2.298C19 1.581 18.402 1 17.668 1z" clipRule="evenodd" />
+                  <svg
+                    className="w-4 h-4 sm:w-5 sm:h-5"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M16.338 16.338H13.67V12.16c0-.995-.017-2.277-1.387-2.277-1.39 0-1.601 1.086-1.601 2.207v4.248H8.014v-8.59h2.559v1.174h.037c.356-.675 1.227-1.387 2.526-1.387 2.703 0 3.203 1.778 3.203 4.092v4.711zM5.005 6.575a1.548 1.548 0 11-.003-3.096 1.548 1.548 0 01.003 3.096zm-1.337 9.763H6.34v-8.59H3.667v8.59zM17.668 1H2.328C1.595 1 1 1.581 1 2.298v15.403C1 18.418 1.595 19 2.328 19h15.34c.734 0 1.332-.582 1.332-1.299V2.298C19 1.581 18.402 1 17.668 1z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </div>
               </div>
-              {errors.linkedinProfile && <p className="text-red-400 text-sm mt-1">{errors.linkedinProfile}</p>}
-              <p className="text-gray-400 text-xs mt-1">
-                💡 Auto-generated from your name - edit as needed | 📋 Will be included in your event namecard for networking
+              {errors.linkedinProfile && (
+                <p className="text-red-400 text-sm mt-1">
+                  {errors.linkedinProfile}
+                </p>
+              )}
+              <p className="text-gray-400 text-xs mt-1 leading-relaxed">
+                💡 Auto-generated from your name - edit as needed
+                <br className="sm:hidden" />
+                <span className="hidden sm:inline"> | </span>📋 Will
+                be included in your event namecard for networking
               </p>
             </div>
           </div>
 
           {/* Experience Assessment */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-white border-b border-gray-700 pb-2">
+          <div className="space-y-3 sm:space-y-4">
+            <h3 className="text-base sm:text-lg font-semibold text-white border-b border-gray-700 pb-2">
               Experience Assessment
             </h3>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-3">
+              <label className="block text-sm font-medium text-gray-300 mb-2 sm:mb-3">
                 Have you vibe-coded before?
               </label>
-              <div className="flex gap-6">
+              <div className="flex gap-4 sm:gap-6">
                 <label className="flex items-center">
                   <input
                     type="radio"
                     name="hasExperience"
                     checked={formData.hasExperience === true}
-                    onChange={() => handleInputChange('hasExperience', true)}
-                    className="mr-2 text-purple-500 focus:ring-purple-500"
+                    onChange={() =>
+                      handleInputChange('hasExperience', true)
+                    }
+                    className="mr-2 text-purple-500 focus:ring-purple-500 w-4 h-4"
                   />
-                  <span className="text-gray-300">Yes</span>
+                  <span className="text-gray-300 text-sm sm:text-base">
+                    Yes
+                  </span>
                 </label>
                 <label className="flex items-center">
                   <input
                     type="radio"
                     name="hasExperience"
                     checked={formData.hasExperience === false}
-                    onChange={() => handleInputChange('hasExperience', false)}
-                    className="mr-2 text-purple-500 focus:ring-purple-500"
+                    onChange={() =>
+                      handleInputChange('hasExperience', false)
+                    }
+                    className="mr-2 text-purple-500 focus:ring-purple-500 w-4 h-4"
                   />
-                  <span className="text-gray-300">No</span>
+                  <span className="text-gray-300 text-sm sm:text-base">
+                    No
+                  </span>
                 </label>
               </div>
             </div>
 
             {formData.hasExperience && (
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-1 sm:mb-2">
                   What tools have you used?
                 </label>
                 <input
                   type="text"
                   value={formData.toolsUsed}
-                  onChange={(e) => handleInputChange('toolsUsed', e.target.value)}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  onChange={(e) =>
+                    handleInputChange('toolsUsed', e.target.value)
+                  }
+                  className="w-full px-3 sm:px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-base"
                   placeholder="e.g., React, Node.js, Python, Figma..."
                 />
               </div>
@@ -440,85 +556,87 @@ export default function SignupForm({ onClose }: { onClose: () => void }) {
           </div>
 
           {/* Project Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-white border-b border-gray-700 pb-2">
+          <div className="space-y-3 sm:space-y-4">
+            <h3 className="text-base sm:text-lg font-semibold text-white border-b border-gray-700 pb-2">
               Your Project Idea
             </h3>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-1 sm:mb-2">
                 What idea do you want to build? *
               </label>
               <textarea
                 value={formData.projectIdea}
-                onChange={(e) => handleInputChange('projectIdea', e.target.value)}
-                rows={4}
-                className={`w-full px-4 py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none ${
-                  errors.projectIdea ? 'border-red-500' : 'border-gray-600'
+                onChange={(e) =>
+                  handleInputChange('projectIdea', e.target.value)
+                }
+                rows={3}
+                className={`w-full px-3 sm:px-4 py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none text-base ${
+                  errors.projectIdea
+                    ? 'border-red-500'
+                    : 'border-gray-600'
                 }`}
                 placeholder="Describe your app idea... Keep it fun, simple, or quirky! Examples: playlist generator, snack tracker, quick scheduler"
               />
-              {errors.projectIdea && <p className="text-red-400 text-sm mt-1">{errors.projectIdea}</p>}
+              {errors.projectIdea && (
+                <p className="text-red-400 text-sm mt-1">
+                  {errors.projectIdea}
+                </p>
+              )}
             </div>
           </div>
 
           {/* Security Verification */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-white border-b border-gray-700 pb-2">
+          <div className="space-y-3 sm:space-y-4">
+            <h3 className="text-base sm:text-lg font-semibold text-white border-b border-gray-700 pb-2">
               Security Verification
             </h3>
-            
-            <Captcha 
+
+            <Captcha
               onVerify={setCaptchaVerified}
-              className="mb-4"
+              className="mb-3 sm:mb-4"
             />
-            {errors.captcha && <p className="text-red-400 text-sm">{errors.captcha}</p>}
+            {errors.captcha && (
+              <p className="text-red-400 text-sm">{errors.captcha}</p>
+            )}
           </div>
 
           {/* Submit Section */}
-          <div className="border-t border-gray-700 pt-6">
-            <div className="bg-purple-900/20 rounded-lg p-4 mb-6 border border-purple-500/30">
+          <div className="border-t border-gray-700 pt-4 sm:pt-6">
+            <div className="bg-purple-900/20 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 border border-purple-500/30">
               <div className="flex items-center mb-2">
-                <span className="text-2xl mr-2">💰</span>
-                <span className="text-lg font-semibold text-white">Event Fee: $10 SGD</span>
+                <span className="text-xl sm:text-2xl mr-2">💰</span>
+                <span className="text-base sm:text-lg font-semibold text-white">
+                  Event Fee: $10 SGD
+                </span>
               </div>
-              <p className="text-gray-300 text-sm">
-                Payment details will be sent to you after registration review. Includes meals, swag, and networking!
+              <p className="text-gray-300 text-xs sm:text-sm leading-relaxed">
+                Payment details will be sent to you after registration
+                review. Includes meals, swag, and networking!
               </p>
             </div>
 
             {(submitStatus === 'error' || spamWarning) && (
               <div className="mb-4 p-4 bg-red-900/20 border border-red-500/30 rounded-lg">
                 <p className="text-red-400 text-sm">
-                  {spamWarning || 'Failed to submit registration. Please try again.'}
+                  {spamWarning ||
+                    'Failed to submit registration. Please try again.'}
                 </p>
               </div>
             )}
 
-            <div className="flex gap-4">
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={isSubmitting}
-                className={`flex-1 px-6 py-3 rounded-lg transition-colors font-medium ${
-                  isSubmitting
-                    ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                    : 'bg-gray-700 text-white hover:bg-gray-600'
-                }`}
-              >
-                Cancel
-              </button>
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex-1 btn-primary glow disabled:opacity-50 disabled:cursor-not-allowed relative flex items-center justify-center"
+                className="w-full sm:flex-1 btn-primary glow disabled:opacity-50 disabled:cursor-not-allowed relative flex items-center justify-center"
                 style={{
-                  background: isSubmitting 
+                  background: isSubmitting
                     ? 'linear-gradient(to right, #6b7280, #6b7280)'
                     : 'linear-gradient(to right, #059669, #10b981)',
-                  padding: '0.75rem 1.5rem',
+                  padding: '0.75rem 1rem',
                   borderRadius: '0.5rem',
-                  fontSize: '1rem',
+                  fontSize: '0.875rem',
                   fontWeight: '600',
                   border: 'none',
                   cursor: isSubmitting ? 'not-allowed' : 'pointer',
@@ -527,17 +645,33 @@ export default function SignupForm({ onClose }: { onClose: () => void }) {
               >
                 {isSubmitting ? (
                   <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2"></div>
-                    Processing Registration...
+                    <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-2 border-white border-t-transparent mr-2"></div>
+                    <span className="text-xs sm:text-sm">
+                      Processing Registration...
+                    </span>
                   </>
                 ) : (
-                  '🚀 Register for Vibe Coding'
+                  <span className="text-sm sm:text-base">
+                    🚀 Register for Vibe Coding
+                  </span>
                 )}
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={isSubmitting}
+                className={`w-full sm:flex-1 px-4 sm:px-6 py-3 rounded-lg transition-colors font-medium text-sm sm:text-base ${
+                  isSubmitting
+                    ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                    : 'bg-gray-700 text-white hover:bg-gray-600'
+                }`}
+              >
+                Cancel
               </button>
             </div>
           </div>
         </form>
       </div>
     </div>
-  )
+  );
 }

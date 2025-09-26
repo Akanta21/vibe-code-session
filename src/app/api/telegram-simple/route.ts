@@ -67,7 +67,8 @@ export async function POST(request: NextRequest) {
 
     const reference = generateReference(
       formData.name,
-      formData.email
+      formData.email,
+      formData.linkedinProfile
     );
 
     // Encode all registration data in the command for stateless operation
@@ -104,8 +105,12 @@ export async function POST(request: NextRequest) {
 
 👤 <b>Name:</b> ${formData.name}
 📧 <b>Email:</b> ${formData.email}
-📱 <b>Phone:</b> ${formData.phone}${formData.linkedinProfile ? `
-🔗 <b>LinkedIn:</b> ${formData.linkedinProfile}` : ''}
+📱 <b>Phone:</b> ${formData.phone}${
+      formData.linkedinProfile
+        ? `
+🔗 <b>LinkedIn:</b> ${formData.linkedinProfile}`
+        : ''
+    }
 🔧 <b>Experience:</b> ${
       formData.hasExperience
         ? `Yes - ${formData.toolsUsed || 'Not specified'}`
@@ -117,11 +122,29 @@ export async function POST(request: NextRequest) {
 💰 <b>Payment:</b> $10 SGD
 📅 <b>Submitted:</b> ${new Date().toLocaleString()}
 
-✅ <b>Payment email sent to participant!</b>
+✅ <b>Payment email sent to participant!</b>`;
 
-<b>Actions:</b>
-💳 Mark as Paid: /paid_${reference}
-`;
+    // Create inline keyboard with action buttons
+    const inlineKeyboard = {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: '💳 Mark as Paid',
+              callback_data: `paid_${reference}`,
+            },
+          ],
+        ],
+      },
+    };
+    const body = JSON.stringify({
+      chat_id: ADMIN_CHAT_ID,
+      text: telegramMessage,
+      parse_mode: 'HTML',
+      ...inlineKeyboard,
+    });
+
+    console.log('Body:', body);
 
     // Send message to Telegram
     const telegramResponse = await fetch(
@@ -131,11 +154,7 @@ export async function POST(request: NextRequest) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          chat_id: ADMIN_CHAT_ID,
-          text: telegramMessage,
-          parse_mode: 'HTML',
-        }),
+        body: body,
       }
     );
 
@@ -165,12 +184,27 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function generateReference(name: string, email: string): string {
+function generateReference(
+  name: string,
+  email: string,
+  linkedinProfile: string
+): string {
   const cleanName = name.replace(/[^a-zA-Z]/g, '').toUpperCase();
-  const emailPart = email
-    .split('@')[0]
-    .replace(/[^a-zA-Z0-9]/g, '')
-    .toUpperCase();
+  const emailPart = email.toUpperCase();
   const timestamp = Date.now().toString().slice(-4);
-  return `${cleanName}_${emailPart}_${timestamp}`;
+
+  // Extract just the LinkedIn handle from the full URL
+  let linkedinHandle = '';
+  if (linkedinProfile && linkedinProfile.trim()) {
+    // Remove https://linkedin.com/in/ or https://www.linkedin.com/in/ prefix
+    linkedinHandle = linkedinProfile
+      .replace(/^https?:\/\/(www\.)?linkedin\.com\/in\//, '')
+      .replace(/\/$/, '') // Remove trailing slash
+      .replace(/[^a-zA-Z0-9\-]/g, '') // Keep only alphanumeric and hyphens
+      .toLowerCase();
+  }
+
+  return linkedinHandle
+    ? `${cleanName}_${emailPart}_${linkedinHandle}`
+    : `${cleanName}_${emailPart}_${timestamp}`;
 }

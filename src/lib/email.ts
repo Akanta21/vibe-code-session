@@ -2,13 +2,17 @@ import { Resend } from 'resend';
 import { generateNamecard } from './namecard';
 
 // Generate Google Calendar invite content
-function generateCalendarInvite(registration: RegistrationData): string {
-  const startDate = new Date('2025-11-06T18:30:00+08:00'); // 6:30 PM SGT
-  const endDate = new Date('2025-11-06T21:00:00+08:00');   // 9:00 PM SGT
-  
-  const formatDate = (date: Date): string => {
-    return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+function generateCalendarInvite(
+  registration: RegistrationData
+): string {
+  // Keep dates in Singapore timezone format for ICS
+  const formatDateSGT = (dateString: string): string => {
+    // Remove timezone info and format as YYYYMMDDTHHMMSS for local time
+    return dateString.replace(/[-:]/g, '').replace('+08:00', '');
   };
+
+  const startDateSGT = formatDateSGT('2025-11-06T18:30:00+08:00'); // 6:30 PM SGT
+  const endDateSGT = formatDateSGT('2025-11-06T21:00:00+08:00'); // 9:00 PM SGT
 
   const icsContent = `BEGIN:VCALENDAR
 VERSION:2.0
@@ -17,11 +21,17 @@ CALSCALE:GREGORIAN
 METHOD:PUBLISH
 BEGIN:VEVENT
 UID:vibe-coding-${registration.reference}@vibecoding.event
-DTSTART:${formatDate(startDate).replace('Z', '')}
-DTEND:${formatDate(endDate).replace('Z', '')}
-DTSTAMP:${formatDate(new Date())}
+DTSTART:${startDateSGT}
+DTEND:${endDateSGT}
+DTSTAMP:${
+    new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'
+  }
 SUMMARY:🎨 Vibe Coding Workshop
-DESCRIPTION:Join us for an amazing coding workshop where you'll turn your idea "${registration.projectIdea}" into a live application!\\n\\nWhat to bring:\\n- Your laptop (any OS)\\n- Charger\\n- Enthusiasm and curiosity!\\n\\nWe'll provide food\\, drinks\\, and an amazing experience!\\n\\nReference: ${registration.reference}
+DESCRIPTION:Join us for an amazing coding workshop where you'll turn your idea "${
+    registration.projectIdea
+  }" into a live application!\\n\\nWhat to bring:\\n- Your laptop (any OS)\\n- Charger\\n- Enthusiasm and curiosity!\\n\\nWe'll provide food\\, drinks\\, and an amazing experience!\\n\\nReference: ${
+    registration.reference
+  }
 LOCATION:182 Cecil St\\, #35-01 Frasers Tower\\, Singapore 069547
 ORGANIZER:CN=Cyndy\\, Nico\\, Andrian - IndoTech.sg:MAILTO:hello@indotech.sg
 STATUS:CONFIRMED
@@ -264,8 +274,10 @@ export async function sendPaymentEmail(
         </div>
 
         <div style="text-align: center; margin: 20px 0;">
-          <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=🎨%20Vibe%20Coding%20Workshop&dates=20251106T103000Z/20251106T130000Z&details=Join%20us%20for%20an%20amazing%20coding%20workshop%20where%20you'll%20turn%20your%20idea%20into%20a%20live%20application!%0A%0AWhat%20to%20bring:%0A-%20Your%20laptop%20(any%20OS)%0A-%20Charger%0A-%20Enthusiasm%20and%20curiosity!%0A%0AReference:%20${registration.reference}&location=182%20Cecil%20St,%20%2335-01%20Frasers%20Tower,%20Singapore%20069547&sf=true&output=xml" 
-             class="button" 
+          <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=🎨%20Vibe%20Coding%20Workshop&dates=20251106T103000Z/20251106T130000Z&details=Join%20us%20for%20an%20amazing%20coding%20workshop%20where%20you'll%20turn%20your%20idea%20into%20a%20live%20application!%0A%0AWhat%20to%20bring:%0A-%20Your%20laptop%20(any%20OS)%0A-%20Charger%0A-%20Enthusiasm%20and%20curiosity!%0A%0AReference:%20${
+            registration.reference
+          }&location=182%20Cecil%20St,%20%2335-01%20Frasers%20Tower,%20Singapore%20069547&sf=true&output=xml"
+             class="button"
              style="display: inline-block; background: linear-gradient(135deg, #059669, #10b981); color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">
             📅 Add to Google Calendar
           </a>
@@ -375,21 +387,17 @@ export async function sendConfirmationEmail(
       <div class="content">
         <div class="status-badge">✅ Confirmed & Paid</div>
 
-        <h2>Welcome to Vibe Coding, ${registration.name}! 🚀</h2>
-        <p>Payment confirmed! We're excited to have you join us for an amazing coding experience.</p>
+        <h2>Welcome ${registration.name}! 🚀</h2>
+        <p>Registration confirmed! See you November 6, 2025.</p>
 
         <div class="event-card">
           <h2>🎨 VIBE CODING WORKSHOP</h2>
-          <p style="font-size: 18px; margin: 0;">${
-            registration.name
-          }</p>
-          <p style="opacity: 0.9; margin: 5px 0;">Reference: ${
-            registration.reference
-          }</p>
+          <p style="font-size: 18px; margin: 0;">${registration.name}</p>
+          <p style="opacity: 0.9; margin: 5px 0;">Reference: ${registration.reference}</p>
         </div>
 
         <div class="event-info">
-          <h3>📅 Event Information</h3>
+          <h3>📅 Event Details</h3>
           <div class="info-row">
             <span class="info-label">Date & Time:</span>
             <span class="info-value">November 6, 2025 • 6:30 PM - 9:00 PM</span>
@@ -398,76 +406,17 @@ export async function sendConfirmationEmail(
             <span class="info-label">Location:</span>
             <span class="info-value">182 Cecil St, #35-01 Frasers Tower, Singapore 069547</span>
           </div>
-          <div class="info-row">
-            <span class="info-label">Duration:</span>
-            <span class="info-value">2.5 hours</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">What to build:</span>
-            <span class="info-value">${
-              registration.projectIdea
-            }</span>
-          </div>${
-            registration.linkedinProfile
-              ? `
-          <div class="info-row">
-            <span class="info-label">LinkedIn:</span>
-            <span class="info-value"><a href="${registration.linkedinProfile}" style="color: #0077b5; text-decoration: none;">${registration.linkedinProfile}</a></span>
-          </div>`
-              : ''
-          }
         </div>
 
         <div class="checklist">
-          <h3>📋 What to Bring</h3>
+          <h3>📎 Attachments</h3>
           <ul>
-            <li><strong>Your laptop</strong> (any OS - Windows, Mac, or Linux)</li>
-            <li><strong>Charger</strong> for your device</li>
-            <li><strong>Enthusiasm and curiosity!</strong></li>
-            <li><strong>Appetite</strong> - we'll have great food and networking</li>
+            <li><strong>📅 Calendar Invite</strong> - Add to your calendar</li>
+            <li><strong>🏷️ Your Namecard</strong> - Generated namecard attached</li>
           </ul>
         </div>
 
-        <div class="timeline">
-          <h3>⏰ Workshop Timeline</h3>
-          <p><strong>6:30 PM</strong> - Kickoff & Icebreaker</p>
-          <p><strong>6:45 PM</strong> - Lovable Demo & Tool Introduction</p>
-          <p><strong>7:05 PM</strong> - Team Formation</p>
-          <p><strong>7:15 PM</strong> - Build Your Vibe (45 min)</p>
-          <p><strong>8:00 PM</strong> - Deploy to Cloudflare (15 min)</p>
-          <p><strong>8:15 PM</strong> - Showcase & Demo (40 min)</p>
-          <p><strong>8:55 PM</strong> - Wrap-up & Networking</p>
-        </div>
-
-        <p><strong>🎯 Goal:</strong> Turn your idea "${
-          registration.projectIdea
-        }" into a live, working application!</p>
-
-        <div class="checklist">
-          <h3>📎 Email Attachments</h3>
-          <p>We've attached everything you need for the event:</p>
-          <ul>
-            <li><strong>📅 Calendar Invite</strong> - "Vibe_Coding_Workshop.ics" file to add the event to your calendar</li>
-            <li><strong>🏷️ Your Event Namecard</strong> - Personalized namecard with your details and QR code for networking${
-              registration.linkedinProfile
-                ? ' (QR links to your LinkedIn)'
-                : ' (QR links to your email)'
-            }</li>
-          </ul>
-          <p><em>💡 Tip: Add the event to your calendar and print/save your namecard for easy networking!</em></p>
-        </div>
-
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=🎨%20Vibe%20Coding%20Workshop&dates=20251106T103000Z/20251106T130000Z&details=Join%20us%20for%20an%20amazing%20coding%20workshop%20where%20you'll%20turn%20your%20idea%20into%20a%20live%20application!%0A%0AWhat%20to%20bring:%0A-%20Your%20laptop%20(any%20OS)%0A-%20Charger%0A-%20Enthusiasm%20and%20curiosity!%0A%0AReference:%20${registration.reference}&location=182%20Cecil%20St,%20%2335-01%20Frasers%20Tower,%20Singapore%20069547&sf=true&output=xml" 
-             class="button" 
-             style="display: inline-block; background: linear-gradient(135deg, #059669, #10b981); color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 10px 0;">
-            📅 Add to Google Calendar
-          </a>
-        </div>
-
-        <p>We'll provide everything else - food, drinks, swag, and an amazing experience!</p>
-
-        <p>Questions? Reply to this email or contact us. See you there! 🎉</p>
+        <p>Questions? Reply to this email. See you there! 🎉</p>
       </div>
 
       <div class="footer">
@@ -491,7 +440,7 @@ export async function sendConfirmationEmail(
     });
 
     // Generate calendar invite
-    const calendarInvite = generateCalendarInvite(registration);
+    // const calendarInvite = generateCalendarInvite(registration);
 
     const { data, error } = await resend.emails.send({
       from:
@@ -508,11 +457,7 @@ export async function sendConfirmationEmail(
             '_'
           )}_VibeCoding_Namecard.png`,
           content: namecardBuffer,
-        },
-        {
-          filename: 'Vibe_Coding_Workshop.ics',
-          content: Buffer.from(calendarInvite, 'utf-8'),
-          contentType: 'text/calendar',
+          contentType: 'image/png',
         },
       ],
     });

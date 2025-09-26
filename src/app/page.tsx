@@ -7,12 +7,12 @@ import Image from 'next/image';
 import { useState } from 'react';
 
 export default function Home() {
-  const [showSignupForm, setShowSignupForm] = useState(false)
+  const [showSignupForm, setShowSignupForm] = useState(false);
 
   const scrollToSection = (sectionId: string) => {
     if (sectionId === 'signup') {
-      setShowSignupForm(true)
-      return
+      setShowSignupForm(true);
+      return;
     }
     console.log('Scrolling to section:', sectionId);
 
@@ -64,15 +64,19 @@ export default function Home() {
       <main className="relative z-10 min-h-screen flex items-center justify-center px-4 py-8">
         <div className="max-w-4xl mx-auto">
           {/* Invitation Card Container */}
-          <div className="invitation-card bg-gradient-to-br from-gray-900/95 via-gray-800/95 to-gray-900/95 backdrop-blur-xl border-2 border-purple-500/30 rounded-3xl p-12 shadow-2xl relative overflow-hidden" style={{
-            borderImage: 'linear-gradient(to right, rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.3), rgba(16, 185, 129, 0.3)) 1'
-          }}>
+          <div
+            className="invitation-card bg-gradient-to-br from-gray-900/95 via-gray-800/95 to-gray-900/95 backdrop-blur-xl border-2 border-purple-500/30 rounded-3xl p-12 shadow-2xl relative overflow-hidden"
+            style={{
+              borderImage:
+                'linear-gradient(to right, rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.3), rgba(16, 185, 129, 0.3)) 1',
+            }}
+          >
             {/* Decorative Corner Elements */}
             <div className="absolute top-4 left-4 w-8 h-8 border-l-2 border-t-2 border-purple-400/50 rounded-tl-lg"></div>
             <div className="absolute top-4 right-4 w-8 h-8 border-r-2 border-t-2 border-blue-400/50 rounded-tr-lg"></div>
             <div className="absolute bottom-4 left-4 w-8 h-8 border-l-2 border-b-2 border-green-400/50 rounded-bl-lg"></div>
             <div className="absolute bottom-4 right-4 w-8 h-8 border-r-2 border-b-2 border-purple-400/50 rounded-br-lg"></div>
-            
+
             {/* Invitation Header */}
             <div className="text-center mb-8">
               <div className="text-sm font-medium text-purple-300 uppercase tracking-widest mb-2">
@@ -91,20 +95,31 @@ export default function Home() {
             {/* Event Details in Card Format */}
             <div className="text-center mb-8 space-y-4">
               <h2 className="text-xl md:text-2xl font-light text-gray-200 leading-relaxed italic">
-                "Turn Your Idea Into a Live Vibe — Fast, Fun, and Real."
+                "Turn Your Idea Into a Live Vibe — Fast, Fun, and
+                Real."
               </h2>
-              
+
               {/* Event Info Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8 mb-8">
                 <div className="text-center p-4 bg-gray-800/50 rounded-2xl border border-gray-700/50">
-                  <div className="text-purple-400 font-semibold mb-1">📅 Date & Time</div>
+                  <div className="text-purple-400 font-semibold mb-1">
+                    📅 Date & Time
+                  </div>
                   <div className="text-gray-200">Nov 6, 2025</div>
-                  <div className="text-gray-300 text-sm">6:30 PM - 9:00 PM</div>
+                  <div className="text-gray-300 text-sm">
+                    6:30 PM - 9:00 PM
+                  </div>
                 </div>
                 <div className="text-center p-4 bg-gray-800/50 rounded-2xl border border-gray-700/50">
-                  <div className="text-blue-400 font-semibold mb-1">📍 Location</div>
-                  <div className="text-gray-200 text-sm">182 Cecil St, #35-01</div>
-                  <div className="text-gray-300 text-sm">Frasers Tower, Singapore</div>
+                  <div className="text-blue-400 font-semibold mb-1">
+                    📍 Location
+                  </div>
+                  <div className="text-gray-200 text-sm">
+                    182 Cecil St, #35-01
+                  </div>
+                  <div className="text-gray-300 text-sm">
+                    Frasers Tower, Singapore
+                  </div>
                 </div>
               </div>
             </div>
@@ -118,7 +133,8 @@ export default function Home() {
                 onClick={() => scrollToSection('signup')}
                 className="btn-primary btn-large glow"
                 style={{
-                  background: 'linear-gradient(to right, #8b5cf6, #3b82f6, #10b981)',
+                  background:
+                    'linear-gradient(to right, #8b5cf6, #3b82f6, #10b981)',
                   padding: '1rem 3rem',
                   borderRadius: '2rem',
                   fontSize: '1.1rem',
@@ -130,7 +146,7 @@ export default function Home() {
                   boxShadow: '0 8px 32px rgba(139, 92, 246, 0.3)',
                 }}
               >
-                💫 Accept Invitation - $10
+                💫 Join the Vibe
               </button>
               <p className="text-green-400 text-sm mt-3 font-medium">
                 ✨ Early Bird Pricing Available

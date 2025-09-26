@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendPaymentEmail, sendConfirmationEmail } from '@/lib/email';
+import { reference } from 'three/tsl';
 
 interface TelegramUpdate {
+  callback_query: {
+    data?: string;
+    message: {
+      chat: {
+        id: number;
+      };
+    };
+  };
   message?: {
     message_id: number;
     from: {
@@ -174,45 +183,61 @@ Reason: [You can add reason here]`;
 
 const handlePaidCommand = async (
   chatId: number,
-  reference: string,
+  commandData: string,
   encodedData?: string
 ) => {
-  // Try to get registration data if provided, otherwise create minimal data
+  // Try to get registration data if provided, otherwise parse from command
   let registration = encodedData
     ? decodeRegistrationData(encodedData)
     : null;
 
   if (!registration) {
-    // Create minimal registration data for email (you might want to store this differently)
-    registration = {
-      name: 'Participant', // You might want to ask admin to provide this
-      email: 'participant@example.com', // You might want to ask admin to provide this
-      phone: '',
-      hasExperience: false,
-      toolsUsed: '',
-      projectIdea: 'Workshop Project',
-      reference,
-      timestamp: new Date().toISOString(),
-    };
+    // Try to parse participant data from command format: REFERENCE_email_name
+    const parts = commandData.split('_');
 
-    await sendTelegramMessage(
-      chatId,
-      `⚠️ <b>LIMITED INFO AVAILABLE</b>
+    if (parts.length >= 3) {
+      // Extract reference, email and name from command
+      const baseRef = parts[0].toUpperCase(); //referenceNumber
+      const email = parts[1]; //email;
+      const name = parts
+        .slice(2)
+        .join(' ')
+        .replace(/([A-Z])/g, ' $1')
+        .trim(); // Handle camelCase names
 
-To send confirmation email, I need participant details.
-Please use: /paid_${reference}_email@example.com_ParticipantName
-
-Or registration was approved earlier with full data.`
-    );
-
-    return NextResponse.json({
-      success: true,
-      action: 'paid_partial',
-      reference,
-    });
+      registration = {
+        name: name || 'Participant',
+        email: email || 'participant@example.com',
+        linkedinProfile: `https://linkedin.com/in/${name}`,
+        phone: '',
+        hasExperience: false,
+        toolsUsed: '',
+        projectIdea: 'Workshop Project',
+        reference: baseRef,
+        timestamp: new Date().toISOString(),
+      };
+    } else {
+      // Fallback - treat whole command as reference
+      const reference = commandData.toUpperCase();
+      registration = {
+        name: 'Participant',
+        email: 'participant@example.com',
+        linkedinProfile: '',
+        phone: '',
+        hasExperience: false,
+        toolsUsed: '',
+        projectIdea: 'Workshop Project',
+        reference,
+        timestamp: new Date().toISOString(),
+      };
+    }
   }
 
   try {
+    console.log(
+      'Sending confirmation email to participant:',
+      registration
+    );
     // Send confirmation email to participant
     await sendConfirmationEmail(registration);
 
@@ -232,7 +257,7 @@ Or registration was approved earlier with full data.`
     return NextResponse.json({
       success: true,
       action: 'paid',
-      reference,
+      reference: registration.reference,
     });
   } catch (error) {
     console.error('Failed to send confirmation email:', error);
@@ -291,31 +316,33 @@ export async function POST(request: NextRequest) {
   try {
     const body: TelegramUpdate = await request.json();
 
-    const message = body.message;
-    if (!message?.text) {
+    console.log('Body:', body);
+
+    const callback_query = body.callback_query;
+    if (!callback_query?.data) {
       return NextResponse.json({ ok: true });
     }
 
-    const chatId = message.chat.id;
-    const text = message.text.toLowerCase();
+    const chatId = callback_query.message.chat.id;
+    const data = callback_query.data?.toLowerCase();
 
     // Handle different commands
-    if (text.startsWith('/approve_')) {
-      const encodedData = text.replace('/approve_', '');
+    if (data.startsWith('approve_')) {
+      const encodedData = data.replace('approve_', '');
       return await handleApproveCommand(chatId, encodedData);
     }
 
-    if (text.startsWith('/reject_')) {
-      const encodedData = text.replace('/reject_', '');
+    if (data.startsWith('reject_')) {
+      const encodedData = data.replace('reject_', '');
       return await handleRejectCommand(chatId, encodedData);
     }
 
-    if (text.startsWith('/paid_')) {
-      const reference = text.replace('/paid_', '').toUpperCase();
-      return await handlePaidCommand(chatId, reference);
+    if (data.startsWith('paid_')) {
+      const fullCommand = data.replace('paid_', '');
+      return await handlePaidCommand(chatId, fullCommand);
     }
 
-    if (text === '/help' || text === '/start') {
+    if (data === 'help' || data === 'start') {
       return await handleHelpCommand(chatId);
     }
 
