@@ -1,4 +1,41 @@
 import { Resend } from 'resend';
+import { generateNamecard } from './namecard';
+
+// Generate Google Calendar invite content
+function generateCalendarInvite(registration: RegistrationData): string {
+  const startDate = new Date('2025-11-06T18:30:00+08:00'); // 6:30 PM SGT
+  const endDate = new Date('2025-11-06T21:00:00+08:00');   // 9:00 PM SGT
+  
+  const formatDate = (date: Date): string => {
+    return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  };
+
+  const icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Vibe Coding//Event Calendar//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:vibe-coding-${registration.reference}@vibecoding.event
+DTSTART:${formatDate(startDate).replace('Z', '')}
+DTEND:${formatDate(endDate).replace('Z', '')}
+DTSTAMP:${formatDate(new Date())}
+SUMMARY:🎨 Vibe Coding Workshop
+DESCRIPTION:Join us for an amazing coding workshop where you'll turn your idea "${registration.projectIdea}" into a live application!\\n\\nWhat to bring:\\n- Your laptop (any OS)\\n- Charger\\n- Enthusiasm and curiosity!\\n\\nWe'll provide food\\, drinks\\, and an amazing experience!\\n\\nReference: ${registration.reference}
+LOCATION:182 Cecil St\\, #35-01 Frasers Tower\\, Singapore 069547
+ORGANIZER:CN=Cyndy\\, Nico\\, Andrian - IndoTech.sg:MAILTO:hello@indotech.sg
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+BEGIN:VALARM
+TRIGGER:-PT30M
+ACTION:DISPLAY
+DESCRIPTION:Vibe Coding Workshop starts in 30 minutes!
+END:VALARM
+END:VEVENT
+END:VCALENDAR`;
+
+  return icsContent;
+}
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -6,6 +43,7 @@ interface RegistrationData {
   name: string;
   email: string;
   phone: string;
+  linkedinProfile?: string;
   hasExperience: boolean;
   toolsUsed: string;
   projectIdea: string;
@@ -13,14 +51,93 @@ interface RegistrationData {
   timestamp: string;
 }
 
+async function generatePayNowQR(
+  amount: number,
+  reference: string
+): Promise<Buffer | null> {
+  try {
+    console.log('Generating PayNow QR for:', { amount, reference });
+
+    const response = await fetch(
+      'https://paynowqr.supply-chain.help/api/generate-qr',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': process.env.PAYNOW_API_KEY || 'YOUR_API_KEY',
+        },
+        body: JSON.stringify({
+          isPersonal: true,
+          identifier: process.env.PAYNOW_MOBILE || '+6585222322',
+          companyName: 'Vibe Coding Event',
+          amount: amount,
+          expiry: '20251130',
+          refNumber: reference,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      console.error(
+        'PayNow API response not OK:',
+        response.status,
+        response.statusText
+      );
+      throw new Error(`PayNow API error: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log('PayNow API result:', {
+      success: result.success,
+      hasQrCode: !!result.data?.qrCode,
+    });
+
+    if (result.success && result.data?.qrCode) {
+      // Convert base64 to Buffer for email attachment
+      const qrCode = result.data.qrCode;
+      let base64Data: string;
+
+      if (qrCode.startsWith('data:image/')) {
+        // Extract base64 part from data URL
+        base64Data = qrCode.split(',')[1];
+      } else {
+        // It's already base64
+        base64Data = qrCode;
+      }
+
+      return Buffer.from(base64Data, 'base64');
+    } else {
+      console.error('PayNow API error result:', result);
+      throw new Error(
+        `Failed to generate PayNow QR code: ${
+          result.message || 'Unknown error'
+        }`
+      );
+    }
+  } catch (error) {
+    console.error('PayNow QR generation error:', error);
+    // Return null to indicate failure
+    return null;
+  }
+}
+
 export async function sendPaymentEmail(
   registration: RegistrationData
 ) {
-  const paynowMobile = process.env.PAYNOW_MOBILE || '+65 9123 4567';
-  // Use a Singapore-compliant PayNow QR code generator (e.g. paynow.now.sh)
-  const qrUrl = `https://paynow.now.sh/api/qr?amount=10&ref=${encodeURIComponent(
+  const paynowMobile = process.env.PAYNOW_MOBILE || '+6585222322';
+  console.log(
+    'Generating QR for payment email:',
     registration.reference
-  )}&mobile=${encodeURIComponent(paynowMobile)}`;
+  );
+  const qrBuffer = await generatePayNowQR(10, registration.reference);
+  console.log(
+    'QR Buffer generated:',
+    !!qrBuffer,
+    qrBuffer ? `${qrBuffer.length} bytes` : 'null'
+  );
+
+  // Generate calendar invite for payment email as well
+  const calendarInvite = generateCalendarInvite(registration);
 
   const emailHtml = `
   <!DOCTYPE html>
@@ -38,7 +155,7 @@ export async function sendPaymentEmail(
       .content { padding: 30px; }
       .status-badge { display: inline-block; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; margin-bottom: 20px; }
       .qr-section { text-align: center; background: #f8fafc; padding: 30px; border-radius: 8px; margin: 20px 0; }
-      .qr-code { max-width: 250px; border-radius: 8px; margin-bottom: 15px; }
+      .qr-code { max-width: 250px; width: 250px; height: auto; border-radius: 8px; margin-bottom: 15px; display: block; margin-left: auto; margin-right: auto; border: 2px solid #e5e7eb; }
       .payment-details { background: #fef3c7; border: 1px solid #fbbf24; border-radius: 8px; padding: 20px; margin: 20px 0; }
       .payment-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
       .payment-label { font-weight: 600; color: #92400e; }
@@ -63,20 +180,44 @@ export async function sendPaymentEmail(
         <div class="status-badge">⏳ Payment Required</div>
 
         <h2>Hi ${registration.name}! 👋</h2>
-        <p>Great news! Your registration for Vibe Coding has been <strong>approved</strong>. To secure your spot, please complete the payment below.</p>
+        <p>Great news! Your registration for Vibe Coding has been <strong>Approved</strong>. To secure your spot, please complete the payment below.</p>
 
         <div class="event-details">
           <h3>📅 Event Details</h3>
           <p><strong>Date:</strong> November 6, 2025<br>
           <strong>Time:</strong> 6:30 PM - 9:00 PM<br>
           <strong>Location:</strong> 182 Cecil St, #35-01 Frasers Tower, Singapore 069547<br>
-          <strong>Your Reference:</strong> <code>${registration.reference}</code></p>
+          <strong>Your Reference:</strong> <code>${
+            registration.reference
+          }</code></p>
         </div>
 
         <div class="qr-section">
           <h3>💳 Payment via PayNow QR</h3>
-          <img src="${qrUrl}" alt="PayNow QR Code" class="qr-code" />
-          <p><strong>Scan with your banking app</strong></p>
+          ${
+            qrBuffer
+              ? `
+          <div class="qr-code" style="background: #f0f9ff; border: 2px solid #0ea5e9; display: flex; align-items: center; justify-content: center; height: 200px; color: #0369a1; border-radius: 12px;">
+            <div style="text-align: center; padding: 20px;">
+              <div style="font-weight: bold; font-size: 18px; margin-bottom: 8px;">PayNow QR Code Attached</div>
+              <div style="font-size: 14px; line-height: 1.5;">
+                Please check your email attachments<br>
+                and scan the <strong>"paynow-qr.png"</strong> image<br>
+                with your banking app
+              </div>
+            </div>
+          </div>
+          `
+              : `
+          <div class="qr-code" style="background: #f9fafb; border: 2px dashed #d1d5db; display: flex; align-items: center; justify-content: center; height: 200px; color: #6b7280; border-radius: 12px;">
+            <div style="text-align: center; padding: 20px;">
+              <div style="font-size: 48px; margin-bottom: 10px;">📱</div>
+              <div style="font-weight: bold; margin-bottom: 5px;">QR Code Unavailable</div>
+              <div style="font-size: 14px;">Please use manual PayNow transfer</div>
+            </div>
+          </div>
+          `
+          }
         </div>
 
         <div class="payment-details">
@@ -91,21 +232,46 @@ export async function sendPaymentEmail(
           </div>
           <div class="payment-row">
             <span class="payment-label">Reference:</span>
-            <span class="payment-value">${registration.reference}</span>
+            <span class="payment-value">${
+              registration.reference
+            }</span>
           </div>
         </div>
 
         <div class="instructions">
           <h3>📱 How to Pay</h3>
           <ol>
-            <li><strong>Option 1:</strong> Scan the QR code above with your banking app</li>
+            <li><strong>Option 1 (Recommended):</strong> ${
+              qrBuffer
+                ? 'Download and scan the attached "paynow-qr.png" image with your banking app'
+                : 'Manual PayNow transfer (QR code unavailable)'
+            }</li>
             <li><strong>Option 2:</strong> Manual PayNow transfer using mobile: <code>${paynowMobile}</code></li>
-            <li><strong>Important:</strong> Include reference <code>${registration.reference}</code> in your transfer</li>
+            <li><strong>Important:</strong> Include reference <code>${
+              registration.reference
+            }</code> in your transfer</li>
           </ol>
           <p><strong>⚠️ Payment Deadline:</strong> Please complete payment within 24 hours to secure your spot.</p>
         </div>
 
-        <p>Once payment is confirmed, you'll receive another email with your event card and additional details.</p>
+        <div class="instructions" style="background: #ecfdf5; border: 1px solid #10b981;">
+          <h3 style="color: #059669;">📅 Save the Date</h3>
+          <p>We've attached a calendar invite (.ics file) to this email! You can:</p>
+          <ul>
+            <li>Download and open the "Vibe_Coding_Workshop.ics" file to add to any calendar app</li>
+            <li>Or click the button below to add directly to Google Calendar</li>
+          </ul>
+        </div>
+
+        <div style="text-align: center; margin: 20px 0;">
+          <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=🎨%20Vibe%20Coding%20Workshop&dates=20251106T103000Z/20251106T130000Z&details=Join%20us%20for%20an%20amazing%20coding%20workshop%20where%20you'll%20turn%20your%20idea%20into%20a%20live%20application!%0A%0AWhat%20to%20bring:%0A-%20Your%20laptop%20(any%20OS)%0A-%20Charger%0A-%20Enthusiasm%20and%20curiosity!%0A%0AReference:%20${registration.reference}&location=182%20Cecil%20St,%20%2335-01%20Frasers%20Tower,%20Singapore%20069547&sf=true&output=xml" 
+             class="button" 
+             style="display: inline-block; background: linear-gradient(135deg, #059669, #10b981); color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">
+            📅 Add to Google Calendar
+          </a>
+        </div>
+
+        <p>Once payment is confirmed, you'll receive another email with your <strong>personalized event namecard</strong> and additional details.</p>
 
         <p>Questions? Reply to this email or contact us for assistance.</p>
       </div>
@@ -119,15 +285,36 @@ export async function sendPaymentEmail(
   `;
 
   try {
-    const { data, error } = await resend.emails.send({
+    const emailOptions: any = {
       from:
         process.env.EMAIL_FROM ||
-        'Vibe Coding <noreply@yourdomain.com>', // Update with your verified domain
+        'Vibe Coding <noreply@yourdomain.com>',
       to: [registration.email],
       subject:
         '🎨 Vibe Coding - Payment Required to Secure Your Spot',
       html: emailHtml,
-    });
+    };
+
+    // Add attachments
+    emailOptions.attachments = [
+      {
+        filename: 'Vibe_Coding_Workshop.ics',
+        content: Buffer.from(calendarInvite, 'utf-8'),
+        contentType: 'text/calendar',
+      },
+    ];
+
+    // Add QR code as inline attachment if available
+    if (qrBuffer) {
+      emailOptions.attachments.push({
+        filename: 'paynow-qr.png',
+        content: qrBuffer,
+        cid: 'paynow-qr',
+        contentType: 'image/png',
+      });
+    }
+
+    const { data, error } = await resend.emails.send(emailOptions);
 
     if (error) {
       console.error('Resend email error:', error);
@@ -193,8 +380,12 @@ export async function sendConfirmationEmail(
 
         <div class="event-card">
           <h2>🎨 VIBE CODING WORKSHOP</h2>
-          <p style="font-size: 18px; margin: 0;">${registration.name}</p>
-          <p style="opacity: 0.9; margin: 5px 0;">Reference: ${registration.reference}</p>
+          <p style="font-size: 18px; margin: 0;">${
+            registration.name
+          }</p>
+          <p style="opacity: 0.9; margin: 5px 0;">Reference: ${
+            registration.reference
+          }</p>
         </div>
 
         <div class="event-info">
@@ -213,8 +404,18 @@ export async function sendConfirmationEmail(
           </div>
           <div class="info-row">
             <span class="info-label">What to build:</span>
-            <span class="info-value">${registration.projectIdea}</span>
-          </div>
+            <span class="info-value">${
+              registration.projectIdea
+            }</span>
+          </div>${
+            registration.linkedinProfile
+              ? `
+          <div class="info-row">
+            <span class="info-label">LinkedIn:</span>
+            <span class="info-value"><a href="${registration.linkedinProfile}" style="color: #0077b5; text-decoration: none;">${registration.linkedinProfile}</a></span>
+          </div>`
+              : ''
+          }
         </div>
 
         <div class="checklist">
@@ -238,7 +439,31 @@ export async function sendConfirmationEmail(
           <p><strong>8:55 PM</strong> - Wrap-up & Networking</p>
         </div>
 
-        <p><strong>🎯 Goal:</strong> Turn your idea "${registration.projectIdea}" into a live, working application!</p>
+        <p><strong>🎯 Goal:</strong> Turn your idea "${
+          registration.projectIdea
+        }" into a live, working application!</p>
+
+        <div class="checklist">
+          <h3>📎 Email Attachments</h3>
+          <p>We've attached everything you need for the event:</p>
+          <ul>
+            <li><strong>📅 Calendar Invite</strong> - "Vibe_Coding_Workshop.ics" file to add the event to your calendar</li>
+            <li><strong>🏷️ Your Event Namecard</strong> - Personalized namecard with your details and QR code for networking${
+              registration.linkedinProfile
+                ? ' (QR links to your LinkedIn)'
+                : ' (QR links to your email)'
+            }</li>
+          </ul>
+          <p><em>💡 Tip: Add the event to your calendar and print/save your namecard for easy networking!</em></p>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=🎨%20Vibe%20Coding%20Workshop&dates=20251106T103000Z/20251106T130000Z&details=Join%20us%20for%20an%20amazing%20coding%20workshop%20where%20you'll%20turn%20your%20idea%20into%20a%20live%20application!%0A%0AWhat%20to%20bring:%0A-%20Your%20laptop%20(any%20OS)%0A-%20Charger%0A-%20Enthusiasm%20and%20curiosity!%0A%0AReference:%20${registration.reference}&location=182%20Cecil%20St,%20%2335-01%20Frasers%20Tower,%20Singapore%20069547&sf=true&output=xml" 
+             class="button" 
+             style="display: inline-block; background: linear-gradient(135deg, #059669, #10b981); color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 10px 0;">
+            📅 Add to Google Calendar
+          </a>
+        </div>
 
         <p>We'll provide everything else - food, drinks, swag, and an amazing experience!</p>
 
@@ -255,6 +480,19 @@ export async function sendConfirmationEmail(
   `;
 
   try {
+    // Generate namecard
+    const namecardBuffer = await generateNamecard({
+      name: registration.name,
+      email: registration.email,
+      linkedinProfile: registration.linkedinProfile,
+      eventName: 'Vibe Coding Event',
+      eventDate: 'Nov 6, 2025 • 6:30 PM - 9:00 PM',
+      eventLocation: '182 Cecil St, #35-01 Frasers Tower, Singapore',
+    });
+
+    // Generate calendar invite
+    const calendarInvite = generateCalendarInvite(registration);
+
     const { data, error } = await resend.emails.send({
       from:
         process.env.EMAIL_FROM ||
@@ -263,6 +501,20 @@ export async function sendConfirmationEmail(
       subject:
         "🎉 Vibe Coding - You're Confirmed! Event Details Inside",
       html: emailHtml,
+      attachments: [
+        {
+          filename: `${registration.name.replace(
+            /[^a-zA-Z0-9]/g,
+            '_'
+          )}_VibeCoding_Namecard.png`,
+          content: namecardBuffer,
+        },
+        {
+          filename: 'Vibe_Coding_Workshop.ics',
+          content: Buffer.from(calendarInvite, 'utf-8'),
+          contentType: 'text/calendar',
+        },
+      ],
     });
 
     if (error) {

@@ -75,6 +75,7 @@ export async function POST(request: NextRequest) {
       name: formData.name,
       email: formData.email,
       phone: formData.phone,
+      linkedinProfile: formData.linkedinProfile,
       hasExperience: formData.hasExperience,
       toolsUsed: formData.toolsUsed,
       projectIdea: formData.projectIdea,
@@ -103,7 +104,8 @@ export async function POST(request: NextRequest) {
 
 👤 <b>Name:</b> ${formData.name}
 📧 <b>Email:</b> ${formData.email}
-📱 <b>Phone:</b> ${formData.phone}
+📱 <b>Phone:</b> ${formData.phone}${formData.linkedinProfile ? `
+🔗 <b>LinkedIn:</b> ${formData.linkedinProfile}` : ''}
 🔧 <b>Experience:</b> ${
       formData.hasExperience
         ? `Yes - ${formData.toolsUsed || 'Not specified'}`

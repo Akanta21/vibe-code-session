@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState } from 'react'
 import Captcha from './Captcha'
 
 interface FormData {
   name: string
   email: string
   phone: string
+  linkedinProfile: string
   hasExperience: boolean
   toolsUsed: string
   projectIdea: string
@@ -16,6 +17,7 @@ interface FormErrors {
   name?: string
   email?: string
   phone?: string
+  linkedinProfile?: string
   projectIdea?: string
   captcha?: string
 }
@@ -25,6 +27,7 @@ export default function SignupForm({ onClose }: { onClose: () => void }) {
     name: '',
     email: '',
     phone: '',
+    linkedinProfile: 'https://linkedin.com/in/',
     hasExperience: false,
     toolsUsed: '',
     projectIdea: ''
@@ -36,8 +39,22 @@ export default function SignupForm({ onClose }: { onClose: () => void }) {
   const [captchaVerified, setCaptchaVerified] = useState(false)
   const [lastSubmissionTime, setLastSubmissionTime] = useState<number>(0)
   const [spamWarning, setSpamWarning] = useState<string>('')
+
+  // Generate kebab-case LinkedIn URL from name
+  const generateLinkedInURL = (name: string): string => {
+    if (!name.trim()) return 'https://linkedin.com/in/'
+    
+    const kebabCase = name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-zA-Z0-9\s-]/g, '') // Remove special characters
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/--+/g, '-') // Replace multiple hyphens with single
+      .replace(/^-|-$/g, '') // Remove leading/trailing hyphens
+    
+    return `https://linkedin.com/in/${kebabCase}`
+  }
   
-  const formRef = useRef<HTMLFormElement>(null)
 
   // Client-side spam detection
   const detectSpamClient = async (formData: FormData) => {
@@ -94,6 +111,10 @@ export default function SignupForm({ onClose }: { onClose: () => void }) {
 
     if (!formData.projectIdea.trim()) {
       newErrors.projectIdea = 'Please tell us about your project idea'
+    }
+
+    if (formData.linkedinProfile.trim() && !/^https:\/\/(?:www\.)?linkedin\.com\/in\/.+$/.test(formData.linkedinProfile)) {
+      newErrors.linkedinProfile = 'Please enter a valid LinkedIn profile URL (e.g., https://linkedin.com/in/yourname)'
     }
 
     if (!captchaVerified) {
@@ -162,6 +183,7 @@ export default function SignupForm({ onClose }: { onClose: () => void }) {
           name: '',
           email: '',
           phone: '',
+          linkedinProfile: 'https://linkedin.com/in/',
           hasExperience: false,
           toolsUsed: '',
           projectIdea: ''
@@ -189,7 +211,27 @@ export default function SignupForm({ onClose }: { onClose: () => void }) {
   }
 
   const handleInputChange = (field: keyof FormData, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
+    const updates: Partial<FormData> = { [field]: value }
+    
+    // Auto-generate LinkedIn URL when name changes (only if LinkedIn field is empty or still auto-generated)
+    if (field === 'name' && typeof value === 'string') {
+      const currentLinkedIn = formData.linkedinProfile
+      const baseURL = 'https://linkedin.com/in/'
+      
+      // Only update LinkedIn if it's empty or still appears to be auto-generated
+      if (!currentLinkedIn || currentLinkedIn === baseURL || currentLinkedIn.startsWith(baseURL)) {
+        const previousName = formData.name
+        const previousGenerated = previousName ? generateLinkedInURL(previousName) : baseURL
+        
+        // Only update if current LinkedIn matches the previously generated one
+        if (!currentLinkedIn || currentLinkedIn === baseURL || currentLinkedIn === previousGenerated) {
+          updates.linkedinProfile = generateLinkedInURL(value)
+        }
+      }
+    }
+    
+    setFormData(prev => ({ ...prev, ...updates }))
+    
     // Clear error when user starts typing
     if (errors[field as keyof FormErrors]) {
       setErrors(prev => ({ ...prev, [field]: undefined }))
@@ -230,13 +272,36 @@ export default function SignupForm({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-gray-900 rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-purple-500/30">
+      {/* Full-screen loading overlay */}
+      {isSubmitting && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[60]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-400 border-t-transparent mx-auto mb-6"></div>
+            <p className="text-white text-xl font-semibold">Processing your registration...</p>
+            <p className="text-gray-300 text-base mt-3">Please wait, this may take a moment</p>
+            <div className="mt-6 flex justify-center">
+              <div className="flex space-x-1">
+                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <div className="bg-gray-900 rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-purple-500/30 relative">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-white">Join the Vibe! 🎨</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white text-2xl transition-colors"
+            disabled={isSubmitting}
+            className={`text-2xl transition-colors ${
+              isSubmitting 
+                ? 'text-gray-600 cursor-not-allowed' 
+                : 'text-gray-400 hover:text-white'
+            }`}
           >
             ×
           </button>
@@ -295,6 +360,32 @@ export default function SignupForm({ onClose }: { onClose: () => void }) {
                 placeholder="+65 9123 4567"
               />
               {errors.phone && <p className="text-red-400 text-sm mt-1">{errors.phone}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                LinkedIn Profile (Optional)
+              </label>
+              <div className="relative">
+                <input
+                  type="url"
+                  value={formData.linkedinProfile}
+                  onChange={(e) => handleInputChange('linkedinProfile', e.target.value)}
+                  className={`w-full px-4 py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all ${
+                    errors.linkedinProfile ? 'border-red-500' : 'border-gray-600'
+                  }`}
+                  placeholder="https://linkedin.com/in/your-name"
+                />
+                <div className="absolute right-3 top-3 text-blue-400">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.338 16.338H13.67V12.16c0-.995-.017-2.277-1.387-2.277-1.39 0-1.601 1.086-1.601 2.207v4.248H8.014v-8.59h2.559v1.174h.037c.356-.675 1.227-1.387 2.526-1.387 2.703 0 3.203 1.778 3.203 4.092v4.711zM5.005 6.575a1.548 1.548 0 11-.003-3.096 1.548 1.548 0 01.003 3.096zm-1.337 9.763H6.34v-8.59H3.667v8.59zM17.668 1H2.328C1.595 1 1 1.581 1 2.298v15.403C1 18.418 1.595 19 2.328 19h15.34c.734 0 1.332-.582 1.332-1.299V2.298C19 1.581 18.402 1 17.668 1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+              {errors.linkedinProfile && <p className="text-red-400 text-sm mt-1">{errors.linkedinProfile}</p>}
+              <p className="text-gray-400 text-xs mt-1">
+                💡 Auto-generated from your name - edit as needed | 📋 Will be included in your event namecard for networking
+              </p>
             </div>
           </div>
 
@@ -408,14 +499,19 @@ export default function SignupForm({ onClose }: { onClose: () => void }) {
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors font-medium"
+                disabled={isSubmitting}
+                className={`flex-1 px-6 py-3 rounded-lg transition-colors font-medium ${
+                  isSubmitting
+                    ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                    : 'bg-gray-700 text-white hover:bg-gray-600'
+                }`}
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex-1 btn-primary glow disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 btn-primary glow disabled:opacity-50 disabled:cursor-not-allowed relative flex items-center justify-center"
                 style={{
                   background: isSubmitting 
                     ? 'linear-gradient(to right, #6b7280, #6b7280)'
@@ -429,7 +525,14 @@ export default function SignupForm({ onClose }: { onClose: () => void }) {
                   color: 'white',
                 }}
               >
-                {isSubmitting ? 'Submitting...' : '🚀 Register for Vibe Coding'}
+                {isSubmitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2"></div>
+                    Processing Registration...
+                  </>
+                ) : (
+                  '🚀 Register for Vibe Coding'
+                )}
               </button>
             </div>
           </div>

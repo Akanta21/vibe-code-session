@@ -60,47 +60,87 @@ export default function Home() {
     >
       <WebGLBackground />
 
-      {/* Compact Hero with Integrated Info */}
+      {/* Hero Invitation Card */}
       <main className="relative z-10 min-h-screen flex items-center justify-center px-4 py-8">
-        <div className="max-w-7xl mx-auto">
-          {/* Hero Content */}
-          <div className="text-center mb-16">
-            <h1 className="text-6xl md:text-8xl font-bold tracking-tight mb-6">
-              <span className="text-gradient">VIBE</span>
-              <br />
-              <span className="text-white">CODING</span>
-            </h1>
-            <h2 className="text-xl md:text-3xl font-light text-gray-300 mb-8 max-w-4xl mx-auto leading-relaxed">
-              Turn Your Idea Into a Live Vibe — Fast, Fun, and Real.
-            </h2>
+        <div className="max-w-4xl mx-auto">
+          {/* Invitation Card Container */}
+          <div className="invitation-card bg-gradient-to-br from-gray-900/95 via-gray-800/95 to-gray-900/95 backdrop-blur-xl border-2 border-purple-500/30 rounded-3xl p-12 shadow-2xl relative overflow-hidden" style={{
+            borderImage: 'linear-gradient(to right, rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.3), rgba(16, 185, 129, 0.3)) 1'
+          }}>
+            {/* Decorative Corner Elements */}
+            <div className="absolute top-4 left-4 w-8 h-8 border-l-2 border-t-2 border-purple-400/50 rounded-tl-lg"></div>
+            <div className="absolute top-4 right-4 w-8 h-8 border-r-2 border-t-2 border-blue-400/50 rounded-tr-lg"></div>
+            <div className="absolute bottom-4 left-4 w-8 h-8 border-l-2 border-b-2 border-green-400/50 rounded-bl-lg"></div>
+            <div className="absolute bottom-4 right-4 w-8 h-8 border-r-2 border-b-2 border-purple-400/50 rounded-br-lg"></div>
+            
+            {/* Invitation Header */}
+            <div className="text-center mb-8">
+              <div className="text-sm font-medium text-purple-300 uppercase tracking-widest mb-2">
+                You're Cordially Invited to
+              </div>
+              <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-4">
+                <span className="text-gradient bg-gradient-to-r from-purple-400 via-blue-400 to-green-400 bg-clip-text text-transparent">
+                  VIBE
+                </span>
+                <br />
+                <span className="text-white">CODING</span>
+              </h1>
+              <div className="w-24 h-px bg-gradient-to-r from-purple-400 to-blue-400 mx-auto mb-6"></div>
+            </div>
 
-            {/* Hero CTA */}
-            <div className="mb-12">
+            {/* Event Details in Card Format */}
+            <div className="text-center mb-8 space-y-4">
+              <h2 className="text-xl md:text-2xl font-light text-gray-200 leading-relaxed italic">
+                "Turn Your Idea Into a Live Vibe — Fast, Fun, and Real."
+              </h2>
+              
+              {/* Event Info Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8 mb-8">
+                <div className="text-center p-4 bg-gray-800/50 rounded-2xl border border-gray-700/50">
+                  <div className="text-purple-400 font-semibold mb-1">📅 Date & Time</div>
+                  <div className="text-gray-200">Nov 6, 2025</div>
+                  <div className="text-gray-300 text-sm">6:30 PM - 9:00 PM</div>
+                </div>
+                <div className="text-center p-4 bg-gray-800/50 rounded-2xl border border-gray-700/50">
+                  <div className="text-blue-400 font-semibold mb-1">📍 Location</div>
+                  <div className="text-gray-200 text-sm">182 Cecil St, #35-01</div>
+                  <div className="text-gray-300 text-sm">Frasers Tower, Singapore</div>
+                </div>
+              </div>
+            </div>
+
+            {/* RSVP Section */}
+            <div className="text-center">
+              <div className="text-sm font-medium text-gray-400 uppercase tracking-wide mb-4">
+                RSVP Required • Limited to 40 Participants
+              </div>
               <button
                 onClick={() => scrollToSection('signup')}
                 className="btn-primary btn-large glow"
                 style={{
-                  background:
-                    'linear-gradient(to right, #059669, #10b981)',
-                  padding: '1.25rem 3rem',
-                  borderRadius: '9999px',
-                  fontSize: '1.25rem',
+                  background: 'linear-gradient(to right, #8b5cf6, #3b82f6, #10b981)',
+                  padding: '1rem 3rem',
+                  borderRadius: '2rem',
+                  fontSize: '1.1rem',
                   fontWeight: '600',
                   transition: 'all 0.3s ease',
-                  border: 'none',
+                  border: '2px solid rgba(139, 92, 246, 0.3)',
                   cursor: 'pointer',
                   color: 'white',
+                  boxShadow: '0 8px 32px rgba(139, 92, 246, 0.3)',
                 }}
               >
-                🚀 Join the Vibe - $10 Only
+                💫 Accept Invitation - $10
               </button>
-              <p className="text-green-400 text-sm mt-2 font-medium">
-                ⏰ Limited to 40 participants
+              <p className="text-green-400 text-sm mt-3 font-medium">
+                ✨ Early Bird Pricing Available
               </p>
             </div>
+          </div>
 
-            {/* Partnership & Organizer - Compact */}
-            <div className="flex flex-wrap items-center justify-center gap-4 mb-12">
+          {/* Partnership & Organizer - Below Card */}
+          <div className="text-center mt-8">
+            <div className="flex flex-wrap items-center justify-center gap-4">
               <div className="flex items-center gap-2">
                 <span className="text-gray-400 text-sm">
                   Organized by
@@ -281,19 +321,15 @@ export default function Home() {
               <div className="space-y-2 text-sm">
                 <div className="flex items-center text-gray-300">
                   <span className="text-blue-400 mr-2">✓</span>
-                  Gourmet meals & premium coffee
+                  Starter pack of vibe coding knowledge
                 </div>
                 <div className="flex items-center text-gray-300">
                   <span className="text-blue-400 mr-2">✓</span>
-                  Exclusive swag & merchandise
+                  Individuals with similar goals
                 </div>
                 <div className="flex items-center text-gray-300">
                   <span className="text-blue-400 mr-2">✓</span>
-                  Digital certificate & resources
-                </div>
-                <div className="flex items-center text-gray-300">
-                  <span className="text-blue-400 mr-2">✓</span>
-                  Industry networking opportunities
+                  Food & Drinks
                 </div>
               </div>
             </div>
