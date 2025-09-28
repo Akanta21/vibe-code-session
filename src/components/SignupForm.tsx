@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Captcha from './Captcha';
+import VibeGenerator from './VibeGenerator';
 
 interface FormData {
   name: string;
@@ -48,6 +49,10 @@ export default function SignupForm({
   const [spamWarning, setSpamWarning] = useState<string>('');
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 3;
+  const [generatedVibe, setGeneratedVibe] = useState<string>('');
+  const [isGeneratingVibe, setIsGeneratingVibe] = useState(false);
+  const [submittedName, setSubmittedName] = useState<string>('');
+  const [submittedFormData, setSubmittedFormData] = useState<FormData | null>(null);
 
   // Generate kebab-case LinkedIn URL from name
   const generateLinkedInURL = (name: string): string => {
@@ -123,7 +128,8 @@ export default function SignupForm({
     } else if (step === 2) {
       // Step 2: Project & Experience
       if (!formData.projectIdea.trim()) {
-        newErrors.projectIdea = 'Please tell us about your project idea';
+        newErrors.projectIdea =
+          'Please tell us about your project idea';
       }
     } else if (step === 3) {
       // Step 3: Final verification
@@ -137,7 +143,8 @@ export default function SignupForm({
           'Please enter a valid LinkedIn profile URL (e.g., https://linkedin.com/in/yourname)';
       }
       if (!captchaVerified) {
-        newErrors.captcha = 'Please complete the security verification';
+        newErrors.captcha =
+          'Please complete the security verification';
       }
     }
 
@@ -222,6 +229,12 @@ export default function SignupForm({
 
       if (response.ok) {
         setSubmitStatus('success');
+        setSubmittedName(formData.name); // Store name before resetting form
+        setSubmittedFormData({ ...formData }); // Store form data for vibe generation
+
+        // Start AI vibe generation with cool UI
+        setIsGeneratingVibe(true);
+
         // Reset form after successful submission
         setFormData({
           name: '',
@@ -301,24 +314,108 @@ export default function SignupForm({
     }
   };
 
+  const handleVibeGenerationComplete = (vibeCode: string) => {
+    setGeneratedVibe(vibeCode);
+    setIsGeneratingVibe(false);
+  };
+
+  const handleVibeGenerationError = () => {
+    setIsGeneratingVibe(false);
+    // Keep generatedVibe empty to show error state
+  };
+
+  const downloadVibeCode = () => {
+    if (!generatedVibe) return;
+
+    const blob = new Blob([generatedVibe], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${submittedName.replace(/\s+/g, '_')}_vibe_code.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   if (submitStatus === 'success') {
     return (
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div className="bg-gray-900 rounded-xl sm:rounded-2xl p-6 sm:p-8 max-w-md w-full border border-green-500/30">
-          <div className="text-center">
+        <div className="bg-gray-900 rounded-xl sm:rounded-2xl p-6 sm:p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-green-500/30">
+          <div className="text-center mb-6">
             <div className="text-4xl sm:text-6xl mb-3 sm:mb-4">
               🎉
             </div>
             <h3 className="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4">
               Registration Submitted!
             </h3>
-            <p className="text-gray-300 mb-4 sm:mb-6 text-sm sm:text-base leading-relaxed">
+            <p className="text-gray-300 mb-4 text-sm sm:text-base leading-relaxed">
               Thank you for registering! We've received your
               application and will send you payment details shortly.
             </p>
+          </div>
+
+          {/* AI Generated Vibe Code Section */}
+          <div className="border-t border-gray-700 pt-6">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-lg sm:text-xl font-bold text-white flex items-center">
+                <span className="mr-2">🤖</span>
+                Your AI-Generated Vibe Code
+              </h4>
+              {generatedVibe && (
+                <button
+                  onClick={downloadVibeCode}
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                  Download
+                </button>
+              )}
+            </div>
+
+            {isGeneratingVibe ? (
+              submittedFormData && (
+                <VibeGenerator
+                  projectIdea={submittedFormData.projectIdea}
+                  hasExperience={submittedFormData.hasExperience}
+                  toolsUsed={submittedFormData.toolsUsed}
+                  name={submittedFormData.name}
+                  onComplete={handleVibeGenerationComplete}
+                  onError={handleVibeGenerationError}
+                />
+              )
+            ) : generatedVibe ? (
+              <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                <pre className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-mono overflow-x-auto">
+                  {generatedVibe}
+                </pre>
+              </div>
+            ) : (
+              <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                <p className="text-gray-400 text-center">
+                  Failed to generate vibe code. You can create one
+                  manually using the format in our documentation.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-center pt-6 border-t border-gray-700 mt-6">
             <button
               onClick={onClose}
-              className="btn-primary w-full sm:w-auto"
+              className="btn-primary"
               style={{
                 background:
                   'linear-gradient(to right, #059669, #10b981)',
@@ -381,7 +478,9 @@ export default function SignupForm({
                 <div
                   key={step}
                   className={`w-2 h-2 rounded-full transition-colors ${
-                    step <= currentStep ? 'bg-purple-500' : 'bg-gray-600'
+                    step <= currentStep
+                      ? 'bg-purple-500'
+                      : 'bg-gray-600'
                   }`}
                 />
               ))}
@@ -404,7 +503,14 @@ export default function SignupForm({
         </div>
 
         <form
-          onSubmit={currentStep === totalSteps ? handleSubmit : (e) => { e.preventDefault(); handleNext(); }}
+          onSubmit={
+            currentStep === totalSteps
+              ? handleSubmit
+              : (e) => {
+                  e.preventDefault();
+                  handleNext();
+                }
+          }
           className="space-y-4 sm:space-y-6"
         >
           {/* Step 1: Personal Information */}
@@ -447,7 +553,9 @@ export default function SignupForm({
                     handleInputChange('email', e.target.value)
                   }
                   className={`w-full px-3 sm:px-4 py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-base ${
-                    errors.email ? 'border-red-500' : 'border-gray-600'
+                    errors.email
+                      ? 'border-red-500'
+                      : 'border-gray-600'
                   }`}
                   placeholder="your.email@example.com"
                 />
@@ -469,7 +577,9 @@ export default function SignupForm({
                     handleInputChange('phone', e.target.value)
                   }
                   className={`w-full px-3 sm:px-4 py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-base ${
-                    errors.phone ? 'border-red-500' : 'border-gray-600'
+                    errors.phone
+                      ? 'border-red-500'
+                      : 'border-gray-600'
                   }`}
                   placeholder="+65 9123 4567"
                 />
@@ -491,10 +601,18 @@ export default function SignupForm({
                 </h3>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1 sm:mb-2">
-                    What would you like to build? *
+                    What would you like to build? * (Very Important to
+                    get you started)
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
-                    {['Productivity App', 'Game/Fun Tool', 'Social Platform', 'Data Visualizer', 'Creative Tool', 'Other'].map((option) => (
+                    {[
+                      'Productivity App',
+                      'Game/Fun Tool',
+                      'Social Platform',
+                      'Data Visualizer',
+                      'Creative Tool',
+                      'Other',
+                    ].map((option) => (
                       <button
                         key={option}
                         type="button"
@@ -516,7 +634,28 @@ export default function SignupForm({
                     ))}
                   </div>
                   <textarea
-                    value={formData.projectIdea.startsWith('Productivity App') || formData.projectIdea.startsWith('Game/Fun Tool') || formData.projectIdea.startsWith('Social Platform') || formData.projectIdea.startsWith('Data Visualizer') || formData.projectIdea.startsWith('Creative Tool') || formData.projectIdea.startsWith('Other') ? formData.projectIdea === 'Other' ? '' : formData.projectIdea : formData.projectIdea}
+                    value={
+                      formData.projectIdea.startsWith(
+                        'Productivity App'
+                      ) ||
+                      formData.projectIdea.startsWith(
+                        'Game/Fun Tool'
+                      ) ||
+                      formData.projectIdea.startsWith(
+                        'Social Platform'
+                      ) ||
+                      formData.projectIdea.startsWith(
+                        'Data Visualizer'
+                      ) ||
+                      formData.projectIdea.startsWith(
+                        'Creative Tool'
+                      ) ||
+                      formData.projectIdea.startsWith('Other')
+                        ? formData.projectIdea === 'Other'
+                          ? ''
+                          : formData.projectIdea
+                        : formData.projectIdea
+                    }
                     onChange={(e) =>
                       handleInputChange('projectIdea', e.target.value)
                     }
@@ -647,8 +786,9 @@ export default function SignupForm({
                   <p className="text-gray-400 text-xs mt-1 leading-relaxed">
                     💡 Auto-generated from your name - edit as needed
                     <br className="sm:hidden" />
-                    <span className="hidden sm:inline"> | </span>📋 Will
-                    be included in your event namecard for networking
+                    <span className="hidden sm:inline"> | </span>📋
+                    Will be included in your event namecard for
+                    networking
                   </p>
                 </div>
               </div>
@@ -662,7 +802,9 @@ export default function SignupForm({
                   className="mb-3 sm:mb-4"
                 />
                 {errors.captcha && (
-                  <p className="text-red-400 text-sm">{errors.captcha}</p>
+                  <p className="text-red-400 text-sm">
+                    {errors.captcha}
+                  </p>
                 )}
               </div>
             </div>
@@ -692,65 +834,76 @@ export default function SignupForm({
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
               {currentStep > 1 && (
                 <button
                   type="button"
                   onClick={handlePrevious}
                   disabled={isSubmitting}
-                  className={`w-full sm:flex-1 px-4 sm:px-6 py-3 rounded-lg transition-colors font-medium text-sm sm:text-base ${
+                  className={`w-full sm:w-auto sm:min-w-[120px] px-4 sm:px-6 py-3 sm:py-3.5 rounded-lg transition-all duration-200 font-medium text-sm sm:text-base flex items-center justify-center ${
                     isSubmitting
                       ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                      : 'bg-gray-700 text-white hover:bg-gray-600'
+                      : 'bg-gray-700 text-white hover:bg-gray-600 hover:shadow-lg transform hover:scale-[1.02] active:scale-[0.98]'
                   }`}
                 >
-                  ← Previous
+                  <span className="mr-2">←</span>
+                  <span>Previous</span>
                 </button>
               )}
-              
+
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full sm:flex-1 btn-primary glow disabled:opacity-50 disabled:cursor-not-allowed relative flex items-center justify-center"
+                className={`w-full sm:flex-1 px-4 sm:px-6 py-3.5 sm:py-4 rounded-lg transition-all duration-200 font-semibold text-sm sm:text-base flex items-center justify-center relative overflow-hidden ${
+                  isSubmitting
+                    ? 'opacity-70 cursor-not-allowed'
+                    : 'hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]'
+                }`}
                 style={{
                   background: isSubmitting
                     ? 'linear-gradient(to right, #6b7280, #6b7280)'
-                    : 'linear-gradient(to right, #059669, #10b981)',
-                  padding: '0.75rem 1rem',
-                  borderRadius: '0.5rem',
-                  fontSize: '0.875rem',
-                  fontWeight: '600',
+                    : 'linear-gradient(135deg, #059669, #10b981, #34d399)',
                   border: 'none',
                   cursor: isSubmitting ? 'not-allowed' : 'pointer',
                   color: 'white',
+                  boxShadow: isSubmitting 
+                    ? 'none' 
+                    : '0 4px 15px rgba(16, 185, 129, 0.3), 0 0 20px rgba(5, 150, 105, 0.2)',
                 }}
               >
+                {/* Animated shimmer effect for non-submitting state */}
+                {!isSubmitting && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 animate-shimmer" />
+                )}
+                
                 {isSubmitting ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-2 border-white border-t-transparent mr-2"></div>
-                    <span className="text-xs sm:text-sm">
-                      Processing Registration...
-                    </span>
+                    <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-2 border-white border-t-transparent mr-2 sm:mr-3"></div>
+                    <span className="hidden sm:inline">Processing Registration...</span>
+                    <span className="sm:hidden">Processing...</span>
                   </>
                 ) : currentStep === totalSteps ? (
-                  <span className="text-sm sm:text-base">
-                    🚀 Register for Vibe Coding
-                  </span>
+                  <>
+                    <span className="mr-2 text-lg">🚀</span>
+                    <span className="hidden sm:inline">Register for Vibe Coding</span>
+                    <span className="sm:hidden">Register Now</span>
+                  </>
                 ) : (
-                  <span className="text-sm sm:text-base">
-                    Continue →
-                  </span>
+                  <>
+                    <span className="mr-2">Continue</span>
+                    <span className="text-lg">→</span>
+                  </>
                 )}
               </button>
-              
+
               <button
                 type="button"
                 onClick={onClose}
                 disabled={isSubmitting}
-                className={`w-full sm:flex-1 px-4 sm:px-6 py-3 rounded-lg transition-colors font-medium text-sm sm:text-base ${
+                className={`w-full sm:w-auto sm:min-w-[100px] px-4 sm:px-6 py-3 sm:py-3.5 rounded-lg transition-all duration-200 font-medium text-sm sm:text-base border border-gray-600 ${
                   isSubmitting
-                    ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                    : 'bg-gray-700 text-white hover:bg-gray-600'
+                    ? 'bg-gray-800 text-gray-500 border-gray-700 cursor-not-allowed'
+                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white hover:border-gray-500 hover:shadow-lg transform hover:scale-[1.02] active:scale-[0.98]'
                 }`}
               >
                 Cancel
