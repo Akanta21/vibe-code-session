@@ -164,13 +164,6 @@ export async function POST(request: NextRequest) {
       throw new Error('Failed to send message to Telegram');
     }
 
-    console.log('Registration submitted:', {
-      name: formData.name,
-      email: formData.email,
-      reference,
-      timestamp: new Date().toISOString(),
-    });
-
     return NextResponse.json({
       success: true,
       reference,

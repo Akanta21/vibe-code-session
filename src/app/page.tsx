@@ -14,7 +14,6 @@ export default function Home() {
       setShowSignupForm(true);
       return;
     }
-    console.log('Scrolling to section:', sectionId);
 
     // Try immediate scroll
     let element = document.getElementById(sectionId);

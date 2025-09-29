@@ -133,9 +133,6 @@ export class ApiSecurity {
     const origin = request.headers.get('origin');
     const referer = request.headers.get('referer');
 
-    console.log('origin', origin);
-    console.log('referer', referer);
-
     // Allow requests without origin (e.g., direct API calls in dev)
     if (!origin && !referer) {
       return process.env.NODE_ENV === 'development';

@@ -91,6 +91,7 @@ export default function VibeGenerator({
   const [overallProgress, setOverallProgress] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [isWaitingForApi, setIsWaitingForApi] = useState(false);
 
   // Start the generation process
   useEffect(() => {
@@ -119,9 +120,14 @@ export default function VibeGenerator({
       await processStage(i);
     }
 
+    // Check if API is still loading after stages complete
+    const apiStartTime = Date.now();
+    setIsWaitingForApi(true);
+
     // Wait for API response after visual progression completes
     try {
       const response = await apiPromise;
+      setIsWaitingForApi(false);
 
       if (response.ok) {
         const data = await response.json();
@@ -138,6 +144,7 @@ export default function VibeGenerator({
       }
     } catch (error) {
       console.error('Vibe generation error:', error);
+      setIsWaitingForApi(false);
       markStageAsError(currentStageIndex);
       onError();
     }
@@ -296,6 +303,19 @@ export default function VibeGenerator({
           </div>
         </div>
       </div>
+
+      {/* API Loading State after stages complete */}
+      {isWaitingForApi && (
+        <div className="mb-6 p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg">
+          <div className="flex items-center justify-center space-x-3">
+            <div className="w-6 h-6 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+            <div className="text-center">
+              <h4 className="text-blue-400 font-semibold">Finalizing Your Vibe Code</h4>
+              <p className="text-blue-300 text-sm">AI is putting the finishing touches...</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Generation Stages */}
       <div className="space-y-4">
