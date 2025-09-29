@@ -100,25 +100,28 @@ export default function VibeGenerator({
   const startGeneration = async () => {
     setIsGenerating(true);
 
+    // Start API call immediately in parallel with visual progression
+    const apiPromise = fetch('/api/generate-vibe', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        projectIdea,
+        hasExperience,
+        toolsUsed,
+        name,
+      }),
+    });
+
     // Start the visual progression
     for (let i = 0; i < stages.length; i++) {
       await processStage(i);
     }
 
-    // Start actual API call during the visual progression
+    // Wait for API response after visual progression completes
     try {
-      const response = await fetch('/api/generate-vibe', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          projectIdea,
-          hasExperience,
-          toolsUsed,
-          name,
-        }),
-      });
+      const response = await apiPromise;
 
       if (response.ok) {
         const data = await response.json();
