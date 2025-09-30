@@ -3,7 +3,7 @@ import { openai } from '@ai-sdk/openai';
 import { generateText } from 'ai';
 import { withSecurity, schemas } from '@/lib/api-security';
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest, context?: { env?: any }) {
   return withSecurity(
     request,
     async (req: NextRequest, securityResult: any) => {
@@ -53,7 +53,15 @@ Guidelines:
 Make this feel like a professional creative brief that would excite them to build it.`;
 
       // Check if OpenAI API key is configured
-      if (!process.env.OPENAI_API_KEY) {
+      const apiKey = process.env.OPENAI_API_KEY;
+      console.log('Environment check:', {
+        allKeys: Object.keys(process.env).filter(k => k.includes('OPENAI') || k.includes('RESEND')),
+        apiKeyExists: !!apiKey,
+        apiKeyLength: apiKey?.length || 0,
+        apiKeyPrefix: apiKey?.substring(0, 5) || 'none'
+      });
+      
+      if (!apiKey) {
         console.error('OpenAI API key not configured');
         return NextResponse.json({
           error: 'service_unavailable',
@@ -61,17 +69,26 @@ Make this feel like a professional creative brief that would excite them to buil
         }, { status: 503 });
       }
 
-      const { text } = await generateText({
-        model: openai('gpt-4o-mini'),
-        prompt,
-        temperature: 0.7,
-      });
+      try {
+        const { text } = await generateText({
+          model: openai('gpt-4o-mini'),
+          prompt,
+          temperature: 0.7,
+        });
+        
+        return NextResponse.json({
+          success: true,
+          vibeCode: text,
+          timestamp: new Date().toISOString(),
+        });
+      } catch (error) {
+        console.error('OpenAI API Error:', error);
+        return NextResponse.json({
+          error: 'ai_service_error',
+          message: 'Failed to generate vibe code'
+        }, { status: 503 });
+      }
 
-      return NextResponse.json({
-        success: true,
-        vibeCode: text,
-        timestamp: new Date().toISOString(),
-      });
     },
     {
       rateLimitType: 'ai',

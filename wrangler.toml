@@ -1,0 +1,34 @@
+main = ".open-next/worker.js"
+name = "vibe-coding"
+compatibility_date = "2025-03-25"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+[env.production]
+# Custom domain routing
+[[env.production.routes]]
+pattern = "vibing.indotech.sg/*"
+zone_name = "indotech.sg"
+
+# Environment variables
+[env.production.vars]
+WEBHOOK_DOMAIN = "https://vibing.indotech.sg/api/telegram-bot"
+NEXT_PUBLIC_APP_URL = "https://vibing.indotech.sg"
+EMAIL_FROM = "Vibe Coding <noreply@yourdomain.com>"
+
+# Logging
+[env.production.observability]
+enabled = true
+
+# Secrets are set via: wrangler secret put SECRET_NAME
+# These will be automatically available as environment variables:
+# - TELEGRAM_BOT_TOKEN
+# - TELEGRAM_ADMIN_CHAT_ID
+# - RESEND_API_KEY
+# - PAYNOW_UEN
+# - OPENAI_API_KEY
+# - ADMIN_API_KEY
+# - INTERNAL_API_KEY

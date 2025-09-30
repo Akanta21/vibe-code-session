@@ -28,6 +28,8 @@ export async function POST(request: NextRequest) {
 
     const { formData, timestamp, userAgent } = await request.json();
 
+    console.log('process-env', process.env);
+
     const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
     const ADMIN_CHAT_ID = process.env.TELEGRAM_ADMIN_CHAT_ID;
 

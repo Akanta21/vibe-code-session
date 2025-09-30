@@ -2,6 +2,8 @@
 
 import WebGLBackground from '@/components/WebGLBackground';
 import AgendaSection from '@/components/AgendaSection';
+import ShowcaseSection from '@/components/ShowcaseSection';
+import QuickNavigation from '@/components/QuickNavigation';
 import SignupForm from '@/components/SignupForm';
 import Image from 'next/image';
 import { useState } from 'react';
@@ -60,7 +62,7 @@ export default function Home() {
       <WebGLBackground />
 
       {/* Hero Invitation Card */}
-      <main className="relative z-10 min-h-screen flex items-center justify-center px-4 py-8">
+      <main id="hero" className="relative z-10 min-h-screen flex items-center justify-center px-4 py-8">
         <div className="max-w-4xl mx-auto">
           {/* Invitation Card Container */}
           <div
@@ -262,7 +264,7 @@ export default function Home() {
           </div>
 
           {/* Integrated Event Cards */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
+          <div id="event-details" className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
             {/* Event Info Card */}
             <div className="detail-card expanded">
               <div className="flex items-center mb-4">
@@ -430,7 +432,7 @@ export default function Home() {
           </div>
 
           {/* Event Timeline */}
-          <div className="bg-gray-900/30 backdrop-blur-sm rounded-2xl p-6 border border-gray-800/50 mb-12">
+          <div id="timeline" className="bg-gray-900/30 backdrop-blur-sm rounded-2xl p-6 border border-gray-800/50 mb-12">
             <h3 className="text-2xl font-bold text-white mb-6 text-center">
               Event Timeline
             </h3>
@@ -535,7 +537,14 @@ export default function Home() {
           </div>
 
           {/* Agenda Section */}
-          <AgendaSection />
+          <div id="agenda">
+            <AgendaSection />
+          </div>
+
+          {/* Showcase Section */}
+          <div id="showcase">
+            <ShowcaseSection scrollToSection={scrollToSection} />
+          </div>
 
           {/* Section Divider */}
           <div className="relative my-20">
@@ -617,6 +626,9 @@ export default function Home() {
           </p>
         </div>
       </footer>
+
+      {/* Quick Navigation */}
+      <QuickNavigation scrollToSection={scrollToSection} />
 
       {/* Signup Form Modal */}
       {showSignupForm && (
