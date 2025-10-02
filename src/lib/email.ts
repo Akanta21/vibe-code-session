@@ -53,6 +53,7 @@ interface RegistrationData {
   name: string;
   email: string;
   phone: string;
+  company?: string;
   linkedinProfile?: string;
   hasExperience: boolean;
   toolsUsed: string;
@@ -139,7 +140,11 @@ export async function sendPaymentEmail(
     'Generating QR for payment email:',
     registration.reference
   );
-  const qrBuffer = await generatePayNowQR(10, registration.reference);
+
+  const paynowReference =
+    'IndoTechSg-VibeCoding-' + registration.reference.split('_')[0];
+
+  const qrBuffer = await generatePayNowQR(10, paynowReference);
   console.log(
     'QR Buffer generated:',
     !!qrBuffer,
@@ -242,9 +247,7 @@ export async function sendPaymentEmail(
           </div>
           <div class="payment-row">
             <span class="payment-label">Reference:</span>
-            <span class="payment-value">${
-              registration.reference
-            }</span>
+            <span class="payment-value">${paynowReference}</span>
           </div>
         </div>
 

@@ -210,6 +210,7 @@ const handlePaidCommand = async (
         email: email || 'participant@example.com',
         linkedinProfile: `https://linkedin.com/in/${name}`,
         phone: '',
+        company: '',
         hasExperience: false,
         toolsUsed: '',
         projectIdea: 'Workshop Project',
@@ -224,6 +225,7 @@ const handlePaidCommand = async (
         email: 'participant@example.com',
         linkedinProfile: '',
         phone: '',
+        company: '',
         hasExperience: false,
         toolsUsed: '',
         projectIdea: 'Workshop Project',
@@ -238,6 +240,7 @@ const handlePaidCommand = async (
       'Sending confirmation email to participant:',
       registration
     );
+
     // Send confirmation email to participant
     await sendConfirmationEmail(registration);
 

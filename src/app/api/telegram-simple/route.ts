@@ -26,9 +26,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { formData, timestamp, userAgent } = await request.json();
-
-    console.log('process-env', process.env);
+    const { formData } = await request.json();
 
     const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
     const ADMIN_CHAT_ID = process.env.TELEGRAM_ADMIN_CHAT_ID;
@@ -78,6 +76,7 @@ export async function POST(request: NextRequest) {
       name: formData.name,
       email: formData.email,
       phone: formData.phone,
+      company: formData.company,
       linkedinProfile: formData.linkedinProfile,
       hasExperience: formData.hasExperience,
       toolsUsed: formData.toolsUsed,
@@ -85,6 +84,52 @@ export async function POST(request: NextRequest) {
       reference,
       timestamp: new Date().toISOString(),
     };
+
+    // Call vibing webhook for new registration
+    try {
+      const webhookResponse = await fetch(
+        process.env.VIBING_WEBHOOK_URL ||
+          'https://your-worker-url.workers.dev/webhook/vibing',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Vibing-Signature':
+              process.env.VIBING_WEBHOOK_SECRET ||
+              'your-webhook-secret',
+          },
+          body: JSON.stringify({
+            id: registrationData.reference,
+            name: registrationData.name,
+            email: registrationData.email,
+            phone: registrationData.phone,
+            company: registrationData.company || 'Not specified',
+            registration_time: registrationData.timestamp,
+            event_title: 'Vibe Coding Nov 2025',
+            event_date: '2025-11-06',
+            payment_status: 'pending',
+          }),
+        }
+      );
+
+      if (!webhookResponse.ok) {
+        console.error(
+          'Vibing webhook failed:',
+          webhookResponse.status,
+          webhookResponse.statusText
+        );
+      } else {
+        console.log(
+          'Vibing webhook call successful for new registration'
+        );
+      }
+    } catch (webhookError) {
+      console.error(
+        'Error calling vibing webhook for new registration:',
+        webhookError
+      );
+      // Continue with registration process even if webhook fails
+    }
 
     const encodedData = Buffer.from(
       JSON.stringify(registrationData)
@@ -108,6 +153,11 @@ export async function POST(request: NextRequest) {
 👤 <b>Name:</b> ${formData.name}
 📧 <b>Email:</b> ${formData.email}
 📱 <b>Phone:</b> ${formData.phone}${
+      formData.company
+        ? `
+🏢 <b>Company:</b> ${formData.company}`
+        : ''
+    }${
       formData.linkedinProfile
         ? `
 🔗 <b>LinkedIn:</b> ${formData.linkedinProfile}`
@@ -124,7 +174,7 @@ export async function POST(request: NextRequest) {
 💰 <b>Payment:</b> $10 SGD
 📅 <b>Submitted:</b> ${new Date().toLocaleString()}
 
-✅ <b>Payment email sent to participant!</b>`;
+✅ <b>Payment email sent to participant!</b>`
 
     // Create inline keyboard with action buttons
     const inlineKeyboard = {

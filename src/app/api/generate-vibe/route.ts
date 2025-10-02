@@ -3,7 +3,7 @@ import { openai } from '@ai-sdk/openai';
 import { generateText } from 'ai';
 import { withSecurity, schemas } from '@/lib/api-security';
 
-export async function POST(request: NextRequest, context?: { env?: any }) {
+export async function POST(request: NextRequest) {
   return withSecurity(
     request,
     async (req: NextRequest, securityResult: any) => {

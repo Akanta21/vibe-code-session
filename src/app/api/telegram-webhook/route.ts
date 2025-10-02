@@ -150,6 +150,7 @@ const handlePaidCallback = async (chatId: number, reference: string, callbackQue
         name: extractedName,
         email: reconstructedEmail, // Placeholder - we'll need the real email
         phone: '+65 0000 0000', // Placeholder
+        company: 'Not specified', // Placeholder
         linkedinProfile: hasLinkedInData ? linkedinPart : '',
         hasExperience: false, // Placeholder
         toolsUsed: 'Various coding tools', // Placeholder
@@ -228,6 +229,7 @@ const handleEmailCommand = async (chatId: number, reference: string, email: stri
       name: namePart.replace(/([A-Z])/g, ' $1').trim(),
       email: email,
       phone: '+65 0000 0000', // Placeholder - would come from database in production
+      company: 'Not specified', // Placeholder - would come from database in production
       linkedinProfile: linkedinProfile,
       hasExperience: false, // Would come from database in production
       toolsUsed: 'Various coding tools', // Placeholder

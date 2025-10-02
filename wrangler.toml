@@ -17,7 +17,7 @@ zone_name = "indotech.sg"
 [env.production.vars]
 WEBHOOK_DOMAIN = "https://vibing.indotech.sg/api/telegram-bot"
 NEXT_PUBLIC_APP_URL = "https://vibing.indotech.sg"
-EMAIL_FROM = "Vibe Coding <noreply@yourdomain.com>"
+EMAIL_FROM = "Vibe Coding <events@events.indotech.sg>"
 
 # Logging
 [env.production.observability]

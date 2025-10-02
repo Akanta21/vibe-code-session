@@ -8,6 +8,7 @@ interface FormData {
   name: string;
   email: string;
   phone: string;
+  company: string;
   linkedinProfile: string;
   hasExperience: boolean;
   toolsUsed: string;
@@ -18,6 +19,7 @@ interface FormErrors {
   name?: string;
   email?: string;
   phone?: string;
+  company?: string;
   linkedinProfile?: string;
   projectIdea?: string;
   captcha?: string;
@@ -32,6 +34,7 @@ export default function SignupForm({
     name: '',
     email: '',
     phone: '',
+    company: '',
     linkedinProfile: 'https://linkedin.com/in/',
     hasExperience: false,
     toolsUsed: '',
@@ -240,6 +243,7 @@ export default function SignupForm({
           name: '',
           email: '',
           phone: '',
+          company: '',
           linkedinProfile: 'https://linkedin.com/in/',
           hasExperience: false,
           toolsUsed: '',
@@ -586,6 +590,30 @@ export default function SignupForm({
                 {errors.phone && (
                   <p className="text-red-400 text-sm mt-1">
                     {errors.phone}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1 sm:mb-2">
+                  Company/Organization (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={formData.company}
+                  onChange={(e) =>
+                    handleInputChange('company', e.target.value)
+                  }
+                  className={`w-full px-3 sm:px-4 py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-base ${
+                    errors.company
+                      ? 'border-red-500'
+                      : 'border-gray-600'
+                  }`}
+                  placeholder="Your company or organization"
+                />
+                {errors.company && (
+                  <p className="text-red-400 text-sm mt-1">
+                    {errors.company}
                   </p>
                 )}
               </div>

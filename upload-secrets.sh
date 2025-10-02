@@ -8,9 +8,12 @@ echo "Uploading secrets to Cloudflare Workers (production environment)..."
 echo "$TELEGRAM_BOT_TOKEN" | npx wrangler secret put TELEGRAM_BOT_TOKEN --env production
 echo "$TELEGRAM_ADMIN_CHAT_ID" | npx wrangler secret put TELEGRAM_ADMIN_CHAT_ID --env production
 echo "$RESEND_API_KEY" | npx wrangler secret put RESEND_API_KEY --env production
-echo "$PAYNOW_UEN" | npx wrangler secret put PAYNOW_UEN --env production
+echo "$PAYNOW_MOBILE" | npx wrangler secret put PAYNOW_MOBILE --env production
+echo "$PAYNOW_API_KEY" | npx wrangler secret put PAYNOW_API_KEY --env production
 echo "$OPENAI_API_KEY" | npx wrangler secret put OPENAI_API_KEY --env production
 echo "$ADMIN_API_KEY" | npx wrangler secret put ADMIN_API_KEY --env production
 echo "$INTERNAL_API_KEY" | npx wrangler secret put INTERNAL_API_KEY --env production
+echo "$VIBING_WEBHOOK_URL" | npx wrangler secret put VIBING_WEBHOOK_URL --env production
+echo "$VIBING_WEBHOOK_SECRET" | npx wrangler secret put VIBING_WEBHOOK_SECRET --env production
 
 echo "All secrets uploaded to production environment!"
