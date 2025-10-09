@@ -317,15 +317,32 @@ export class ApiSecurity {
     }
 
     // Origin validation
-    if (validateOrigin && !this.validateOrigin(request)) {
-      this.logSecurityEvent('INVALID_ORIGIN', request, {
-        origin: request.headers.get('origin'),
-        referer: request.headers.get('referer'),
-      });
-      return NextResponse.json(
-        { error: 'forbidden', message: 'Request origin not allowed' },
-        { status: 403 }
+    // Check if origin validation is enabled and the request fails origin validation
+    if (validateOrigin) {
+      const isOriginValid = this.validateOrigin(request);
+      console.log('isOriginValid', isOriginValid);
+      console.log('validateOrigin', validateOrigin);
+      console.log(
+        'request.headers.get("origin")',
+        request.headers.get('origin')
       );
+      console.log(
+        'request.headers.get("referer")',
+        request.headers.get('referer')
+      );
+      if (!isOriginValid) {
+        this.logSecurityEvent('INVALID_ORIGIN', request, {
+          origin: request.headers.get('origin'),
+          referer: request.headers.get('referer'),
+        });
+        return NextResponse.json(
+          {
+            error: 'forbidden',
+            message: 'Request origin not allowed',
+          },
+          { status: 403 }
+        );
+      }
     }
 
     // Input validation (if body is provided)

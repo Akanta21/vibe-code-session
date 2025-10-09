@@ -5,15 +5,31 @@ import AgendaSection from '@/components/AgendaSection';
 import ShowcaseSection from '@/components/ShowcaseSection';
 import QuickNavigation from '@/components/QuickNavigation';
 import SignupForm from '@/components/SignupForm';
+import { checkSignupStatus } from '@/lib/signup-status';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Home() {
   const [showSignupForm, setShowSignupForm] = useState(false);
+  const [signupsEnabled, setSignupsEnabled] = useState(true);
+  const [signupMessage, setSignupMessage] = useState<string>('');
+
+  useEffect(() => {
+    checkSignupStatus().then((status) => {
+      setSignupsEnabled(status.enabled);
+      if (status.message) {
+        setSignupMessage(status.message);
+      }
+    });
+  }, []);
 
   const scrollToSection = (sectionId: string) => {
     if (sectionId === 'signup') {
-      setShowSignupForm(true);
+      if (signupsEnabled) {
+        setShowSignupForm(true);
+      } else {
+        alert(signupMessage || 'Registration is currently closed.');
+      }
       return;
     }
 
@@ -62,7 +78,10 @@ export default function Home() {
       <WebGLBackground />
 
       {/* Hero Invitation Card */}
-      <main id="hero" className="relative z-10 min-h-screen flex items-center justify-center px-4 py-8">
+      <main
+        id="hero"
+        className="relative z-10 min-h-screen flex items-center justify-center px-4 py-8"
+      >
         <div className="max-w-4xl mx-auto">
           {/* Invitation Card Container */}
           <div
@@ -128,29 +147,45 @@ export default function Home() {
             {/* RSVP Section */}
             <div className="text-center">
               <div className="text-sm font-medium text-gray-400 uppercase tracking-wide mb-4">
-                RSVP Required • Limited to 40 Participants
+                RSVP Required • Limited to 20 Participants
               </div>
               <button
                 onClick={() => scrollToSection('signup')}
-                className="btn-primary btn-large glow"
+                disabled={!signupsEnabled}
+                className={`btn-primary btn-large glow ${
+                  !signupsEnabled
+                    ? 'opacity-60 cursor-not-allowed'
+                    : ''
+                }`}
                 style={{
-                  background:
-                    'linear-gradient(to right, #8b5cf6, #3b82f6, #10b981)',
+                  background: signupsEnabled
+                    ? 'linear-gradient(to right, #8b5cf6, #3b82f6, #10b981)'
+                    : 'linear-gradient(to right, #6b7280, #6b7280)',
                   padding: '1rem 3rem',
                   borderRadius: '2rem',
                   fontSize: '1.1rem',
                   fontWeight: '600',
                   transition: 'all 0.3s ease',
                   border: '2px solid rgba(139, 92, 246, 0.3)',
-                  cursor: 'pointer',
+                  cursor: signupsEnabled ? 'pointer' : 'not-allowed',
                   color: 'white',
-                  boxShadow: '0 8px 32px rgba(139, 92, 246, 0.3)',
+                  boxShadow: signupsEnabled
+                    ? '0 8px 32px rgba(139, 92, 246, 0.3)'
+                    : 'none',
                 }}
               >
-                💫 Join the Vibe
+                {signupsEnabled
+                  ? '💫 Join the Vibe'
+                  : '❌ Registration Closed'}
               </button>
-              <p className="text-green-400 text-sm mt-3 font-medium">
-                ✨ Early Bird Pricing Available
+              <p
+                className={`text-sm mt-3 font-medium ${
+                  signupsEnabled ? 'text-green-400' : 'text-red-400'
+                }`}
+              >
+                {signupsEnabled
+                  ? '✨ Early Bird Pricing Available'
+                  : signupMessage}
               </p>
             </div>
           </div>
@@ -264,7 +299,10 @@ export default function Home() {
           </div>
 
           {/* Integrated Event Cards */}
-          <div id="event-details" className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
+          <div
+            id="event-details"
+            className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12"
+          >
             {/* Event Info Card */}
             <div className="detail-card expanded">
               <div className="flex items-center mb-4">
@@ -308,21 +346,29 @@ export default function Home() {
               <div className="mt-4 pt-4 border-t border-gray-700">
                 <button
                   onClick={() => scrollToSection('signup')}
-                  className="w-full btn-primary"
+                  disabled={!signupsEnabled}
+                  className={`w-full btn-primary ${
+                    !signupsEnabled
+                      ? 'opacity-60 cursor-not-allowed'
+                      : ''
+                  }`}
                   style={{
-                    background:
-                      'linear-gradient(to right, #8b5cf6, #3b82f6)',
+                    background: signupsEnabled
+                      ? 'linear-gradient(to right, #8b5cf6, #3b82f6)'
+                      : 'linear-gradient(to right, #6b7280, #6b7280)',
                     padding: '0.75rem 1.5rem',
                     borderRadius: '0.5rem',
                     fontSize: '0.9rem',
                     fontWeight: '600',
                     transition: 'all 0.3s ease',
                     border: 'none',
-                    cursor: 'pointer',
+                    cursor: signupsEnabled
+                      ? 'pointer'
+                      : 'not-allowed',
                     color: 'white',
                   }}
                 >
-                  Reserve Your Spot
+                  {signupsEnabled ? 'Reserve Your Spot' : 'Closed'}
                 </button>
               </div>
             </div>
@@ -397,24 +443,38 @@ export default function Home() {
               </p>
               <button
                 onClick={() => scrollToSection('signup')}
-                className="btn-primary glow"
+                disabled={!signupsEnabled}
+                className={`btn-primary glow ${
+                  !signupsEnabled
+                    ? 'opacity-60 cursor-not-allowed'
+                    : ''
+                }`}
                 style={{
-                  background:
-                    'linear-gradient(to right, #059669, #10b981)',
+                  background: signupsEnabled
+                    ? 'linear-gradient(to right, #059669, #10b981)'
+                    : 'linear-gradient(to right, #6b7280, #6b7280)',
                   padding: '1rem 2.5rem',
                   borderRadius: '9999px',
                   fontSize: '1.1rem',
                   fontWeight: '600',
                   transition: 'all 0.3s ease',
                   border: 'none',
-                  cursor: 'pointer',
+                  cursor: signupsEnabled ? 'pointer' : 'not-allowed',
                   color: 'white',
                 }}
               >
-                💡 Secure Your Spot - $10
+                {signupsEnabled
+                  ? '💡 Secure Your Spot - $10'
+                  : '❌ Registration Closed'}
               </button>
-              <p className="text-green-400 text-sm mt-3">
-                🔥 Early bird pricing • Only 40 spots available
+              <p
+                className={`text-sm mt-3 ${
+                  signupsEnabled ? 'text-green-400' : 'text-red-400'
+                }`}
+              >
+                {signupsEnabled
+                  ? '🔥 Early bird pricing • Only 20 spots available'
+                  : signupMessage}
               </p>
             </div>
           </div>
@@ -432,7 +492,10 @@ export default function Home() {
           </div>
 
           {/* Event Timeline */}
-          <div id="timeline" className="bg-gray-900/30 backdrop-blur-sm rounded-2xl p-6 border border-gray-800/50 mb-12">
+          <div
+            id="timeline"
+            className="bg-gray-900/30 backdrop-blur-sm rounded-2xl p-6 border border-gray-800/50 mb-12"
+          >
             <h3 className="text-2xl font-bold text-white mb-6 text-center">
               Event Timeline
             </h3>
@@ -543,7 +606,10 @@ export default function Home() {
 
           {/* Showcase Section */}
           <div id="showcase">
-            <ShowcaseSection scrollToSection={scrollToSection} />
+            <ShowcaseSection
+              scrollToSection={scrollToSection}
+              signupsEnabled={signupsEnabled}
+            />
           </div>
 
           {/* Section Divider */}
@@ -573,24 +639,40 @@ export default function Home() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <button
                   onClick={() => scrollToSection('signup')}
-                  className="btn-primary btn-large glow"
+                  disabled={!signupsEnabled}
+                  className={`btn-primary btn-large glow ${
+                    !signupsEnabled
+                      ? 'opacity-60 cursor-not-allowed'
+                      : ''
+                  }`}
                   style={{
-                    background:
-                      'linear-gradient(to right, #059669, #10b981)',
+                    background: signupsEnabled
+                      ? 'linear-gradient(to right, #059669, #10b981)'
+                      : 'linear-gradient(to right, #6b7280, #6b7280)',
                     padding: '1.25rem 3rem',
                     borderRadius: '9999px',
                     fontSize: '1.25rem',
                     fontWeight: '600',
                     transition: 'all 0.3s ease',
                     border: 'none',
-                    cursor: 'pointer',
+                    cursor: signupsEnabled
+                      ? 'pointer'
+                      : 'not-allowed',
                     color: 'white',
                   }}
                 >
-                  Register Now - $10
+                  {signupsEnabled
+                    ? 'Register Now - $10'
+                    : '❌ Registration Closed'}
                 </button>
-                <div className="text-gray-400 text-sm">
-                  Limited to 40 participants
+                <div
+                  className={`text-sm ${
+                    signupsEnabled ? 'text-gray-400' : 'text-red-400'
+                  }`}
+                >
+                  {signupsEnabled
+                    ? 'Limited to 20 participants'
+                    : signupMessage}
                 </div>
               </div>
             </div>
@@ -628,7 +710,10 @@ export default function Home() {
       </footer>
 
       {/* Quick Navigation */}
-      <QuickNavigation scrollToSection={scrollToSection} />
+      <QuickNavigation
+        scrollToSection={scrollToSection}
+        signupsEnabled={signupsEnabled}
+      />
 
       {/* Signup Form Modal */}
       {showSignupForm && (

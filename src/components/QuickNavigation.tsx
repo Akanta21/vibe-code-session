@@ -10,10 +10,12 @@ interface NavigationItem {
 
 interface QuickNavigationProps {
   scrollToSection: (sectionId: string) => void;
+  signupsEnabled?: boolean;
 }
 
 export default function QuickNavigation({
   scrollToSection,
+  signupsEnabled = true,
 }: QuickNavigationProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
@@ -103,6 +105,7 @@ export default function QuickNavigation({
             <button
               key={item.id}
               onClick={() => scrollToSection(item.id)}
+              disabled={item.id === 'signup' && !signupsEnabled}
               className={`group flex items-center transition-all duration-300 hover:bg-purple-600/20 ${
                 isMobile
                   ? 'justify-center p-2 rounded-full'
@@ -113,8 +116,12 @@ export default function QuickNavigation({
                     ? 'bg-purple-600/40 text-purple-300 scale-110'
                     : 'bg-purple-600/30 text-purple-300 border-l-2 border-purple-400'
                   : 'text-purple-600 hover:text-purple-600'
+              } ${
+                item.id === 'signup' && !signupsEnabled
+                  ? 'opacity-50 cursor-not-allowed'
+                  : ''
               }`}
-              title={item.label}
+              title={item.id === 'signup' && !signupsEnabled ? 'Registration Closed' : item.label}
             >
               <span className={isMobile ? 'text-base' : 'text-lg'}>
                 {item.emoji}

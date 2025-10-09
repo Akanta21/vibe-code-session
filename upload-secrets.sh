@@ -15,5 +15,7 @@ echo "$ADMIN_API_KEY" | npx wrangler secret put ADMIN_API_KEY --env production
 echo "$INTERNAL_API_KEY" | npx wrangler secret put INTERNAL_API_KEY --env production
 echo "$VIBING_WEBHOOK_URL" | npx wrangler secret put VIBING_WEBHOOK_URL --env production
 echo "$VIBING_WEBHOOK_SECRET" | npx wrangler secret put VIBING_WEBHOOK_SECRET --env production
+echo "$SIGNUPS_DISABLED" | npx wrangler secret put SIGNUPS_DISABLED --env production
+
 
 echo "All secrets uploaded to production environment!"

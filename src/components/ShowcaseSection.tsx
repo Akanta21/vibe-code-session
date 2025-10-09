@@ -17,9 +17,10 @@ interface ShowcaseProject {
 
 interface ShowcaseSectionProps {
   scrollToSection: (sectionId: string) => void;
+  signupsEnabled?: boolean;
 }
 
-export default function ShowcaseSection({ scrollToSection }: ShowcaseSectionProps) {
+export default function ShowcaseSection({ scrollToSection, signupsEnabled = true }: ShowcaseSectionProps) {
   const promptStructure = {
     title: "Anatomy of an Exemplary Prompt",
     sections: [
@@ -216,20 +217,23 @@ export default function ShowcaseSection({ scrollToSection }: ShowcaseSectionProp
                 <div className="text-center">
                   <button
                     onClick={() => scrollToSection('signup')}
-                    className="w-full btn-primary glow"
+                    disabled={!signupsEnabled}
+                    className={`w-full btn-primary glow ${!signupsEnabled ? 'opacity-60 cursor-not-allowed' : ''}`}
                     style={{
-                      background: 'linear-gradient(to right, #8b5cf6, #3b82f6)',
+                      background: signupsEnabled
+                        ? 'linear-gradient(to right, #8b5cf6, #3b82f6)'
+                        : 'linear-gradient(to right, #6b7280, #6b7280)',
                       padding: '1rem 2rem',
                       borderRadius: '0.75rem',
                       fontSize: '1.1rem',
                       fontWeight: '600',
                       transition: 'all 0.3s ease',
                       border: 'none',
-                      cursor: 'pointer',
+                      cursor: signupsEnabled ? 'pointer' : 'not-allowed',
                       color: 'white',
                     }}
                   >
-                    💜 Build Your Vision with Lovable
+                    {signupsEnabled ? '💜 Build Your Vision with Lovable' : '❌ Registration Closed'}
                   </button>
                   <p className="text-purple-300 text-sm mt-2">
                     Learn how at the Vibe Coding Event

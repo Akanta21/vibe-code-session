@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { openai } from '@ai-sdk/openai';
-import { generateText } from 'ai';
 import { withSecurity, schemas } from '@/lib/api-security';
+import { generateVibeCode } from '@/lib/generate-vibe';
 
 export async function POST(request: NextRequest) {
   return withSecurity(
@@ -9,86 +8,26 @@ export async function POST(request: NextRequest) {
     async (req: NextRequest, securityResult: any) => {
       const { projectIdea, hasExperience = false, toolsUsed, name } = securityResult.sanitizedInput;
 
-      // Create the prompt for AI to generate vibe-code format
-      const prompt = `You are a creative UX/UI designer helping a participant named ${name} expand their project idea into a comprehensive "vibe code" specification.
-
-Based on their project idea: "${projectIdea}"
-Experience level: ${hasExperience ? `Yes - Tools used: ${toolsUsed || 'Not specified'}` : 'No previous experience'}
-
-Generate a detailed vibe code specification following this exact format:
-
-**Core Purpose:** [One clear sentence describing what they're building]
-
-**Visual Vibe:**
-- [4-6 specific visual/aesthetic descriptions using vivid language]
-- [Include colors, typography, animations, layouts]
-- [Make it inspiring and concrete, not generic]
-
-**Core Features:**
-- [5-7 key functional requirements]
-- [Be specific but not overly technical]
-- [Focus on user-facing features]
-
-**Interaction Style:**
-- [3-5 descriptions of how it should feel to use]
-- [Include animation timing, feedback, responsiveness]
-
-**Technical Constraints:**
-- [3-4 practical constraints based on their experience level]
-- [If beginner: suggest simpler tech stack]
-- [If experienced: can be more ambitious]
-
-**Reference Vibes:**
-- [3-4 comparisons to existing products/designs]
-- [Use format "X's Y but more Z"]
-
-Guidelines:
-1. Be specific with adjectives - avoid "clean" or "modern"
-2. Describe feelings and emotions the app should evoke
-3. Match technical complexity to their experience level
-4. Make it inspirational but achievable
-5. Use evocative, creative language
-6. If their idea is vague, intelligently expand it with creative details
-
-Make this feel like a professional creative brief that would excite them to build it.`;
-
-      // Check if OpenAI API key is configured
-      const apiKey = process.env.OPENAI_API_KEY;
-      console.log('Environment check:', {
-        allKeys: Object.keys(process.env).filter(k => k.includes('OPENAI') || k.includes('RESEND')),
-        apiKeyExists: !!apiKey,
-        apiKeyLength: apiKey?.length || 0,
-        apiKeyPrefix: apiKey?.substring(0, 5) || 'none'
+      const result = await generateVibeCode({
+        projectIdea,
+        hasExperience,
+        toolsUsed,
+        name,
       });
-      
-      if (!apiKey) {
-        console.error('OpenAI API key not configured');
-        return NextResponse.json({
-          error: 'service_unavailable',
-          message: 'AI service not configured'
-        }, { status: 503 });
-      }
 
-      try {
-        const { text } = await generateText({
-          model: openai('gpt-4o-mini'),
-          prompt,
-          temperature: 0.7,
-        });
-        
+      if (result.success) {
         return NextResponse.json({
           success: true,
-          vibeCode: text,
-          timestamp: new Date().toISOString(),
+          vibeCode: result.vibeCode,
+          timestamp: result.timestamp,
         });
-      } catch (error) {
-        console.error('OpenAI API Error:', error);
+      } else {
+        const statusCode = result.error === 'AI service not configured' ? 503 : 503;
         return NextResponse.json({
-          error: 'ai_service_error',
-          message: 'Failed to generate vibe code'
-        }, { status: 503 });
+          error: result.error === 'AI service not configured' ? 'service_unavailable' : 'ai_service_error',
+          message: result.error,
+        }, { status: statusCode });
       }
-
     },
     {
       rateLimitType: 'ai',

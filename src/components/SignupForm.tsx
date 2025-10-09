@@ -2,13 +2,13 @@
 
 import { useState } from 'react';
 import Captcha from './Captcha';
-import VibeGenerator from './VibeGenerator';
 
 interface FormData {
   name: string;
   email: string;
   phone: string;
   company: string;
+  jobTitle: string;
   linkedinProfile: string;
   hasExperience: boolean;
   toolsUsed: string;
@@ -35,6 +35,7 @@ export default function SignupForm({
     email: '',
     phone: '',
     company: '',
+    jobTitle: '',
     linkedinProfile: 'https://linkedin.com/in/',
     hasExperience: false,
     toolsUsed: '',
@@ -52,10 +53,7 @@ export default function SignupForm({
   const [spamWarning, setSpamWarning] = useState<string>('');
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 3;
-  const [generatedVibe, setGeneratedVibe] = useState<string>('');
-  const [isGeneratingVibe, setIsGeneratingVibe] = useState(false);
   const [submittedName, setSubmittedName] = useState<string>('');
-  const [submittedFormData, setSubmittedFormData] = useState<FormData | null>(null);
 
   // Generate kebab-case LinkedIn URL from name
   const generateLinkedInURL = (name: string): string => {
@@ -233,10 +231,6 @@ export default function SignupForm({
       if (response.ok) {
         setSubmitStatus('success');
         setSubmittedName(formData.name); // Store name before resetting form
-        setSubmittedFormData({ ...formData }); // Store form data for vibe generation
-
-        // Start AI vibe generation with cool UI
-        setIsGeneratingVibe(true);
 
         // Reset form after successful submission
         setFormData({
@@ -244,6 +238,7 @@ export default function SignupForm({
           email: '',
           phone: '',
           company: '',
+          jobTitle: '',
           linkedinProfile: 'https://linkedin.com/in/',
           hasExperience: false,
           toolsUsed: '',
@@ -263,6 +258,10 @@ export default function SignupForm({
         } else if (errorData.error === 'spam_detected') {
           setSpamWarning(
             'Submission flagged as spam. Please review your information.'
+          );
+        } else if (errorData.error === 'signups_closed') {
+          setSpamWarning(
+            'Registration is currently closed. Thank you for your interest!'
           );
         } else {
           throw new Error('Failed to submit registration');
@@ -318,119 +317,45 @@ export default function SignupForm({
     }
   };
 
-  const handleVibeGenerationComplete = (vibeCode: string) => {
-    setGeneratedVibe(vibeCode);
-    setIsGeneratingVibe(false);
-  };
-
-  const handleVibeGenerationError = () => {
-    setIsGeneratingVibe(false);
-    // Keep generatedVibe empty to show error state
-  };
-
-  const downloadVibeCode = () => {
-    if (!generatedVibe) return;
-
-    const blob = new Blob([generatedVibe], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${submittedName.replace(/\s+/g, '_')}_vibe_code.md`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
 
   if (submitStatus === 'success') {
     return (
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div className="bg-gray-900 rounded-xl sm:rounded-2xl p-6 sm:p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-green-500/30">
+        <div className="bg-gray-900 rounded-xl sm:rounded-2xl p-6 sm:p-8 max-w-2xl w-full border border-green-500/30">
           <div className="text-center mb-6">
             <div className="text-4xl sm:text-6xl mb-3 sm:mb-4">
               🎉
             </div>
             <h3 className="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4">
-              Registration Submitted!
+              Registration Complete!
             </h3>
             <p className="text-gray-300 mb-4 text-sm sm:text-base leading-relaxed">
-              Thank you for registering! We've received your
-              application and will send you payment details shortly.
+              Hi {submittedName}! Your registration has been processed successfully.
             </p>
           </div>
 
-          {/* AI Generated Vibe Code Section */}
-          <div className="border-t border-gray-700 pt-6">
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="text-lg sm:text-xl font-bold text-white flex items-center">
-                <span className="mr-2">🤖</span>
-                Your AI-Generated Vibe Code
-              </h4>
-              {generatedVibe && (
-                <button
-                  onClick={downloadVibeCode}
-                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                  Download
-                </button>
-              )}
+          <div className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 rounded-lg p-6 border border-purple-500/30 mb-6">
+            <h4 className="text-lg font-bold text-white mb-3 flex items-center">
+              <span className="mr-2">📧</span>
+              Check Your Email
+            </h4>
+            <div className="text-gray-300 text-sm leading-relaxed space-y-2">
+              <p>• <strong>Payment instructions</strong> with PayNow QR code</p>
+              <p>• <strong>Calendar invite</strong> for the event</p>
+              <p>• <strong>Your personalized AI-generated vibe code</strong> (.md file)</p>
             </div>
-
-            {isGeneratingVibe ? (
-              submittedFormData && (
-                <VibeGenerator
-                  projectIdea={submittedFormData.projectIdea}
-                  hasExperience={submittedFormData.hasExperience}
-                  toolsUsed={submittedFormData.toolsUsed}
-                  name={submittedFormData.name}
-                  onComplete={handleVibeGenerationComplete}
-                  onError={handleVibeGenerationError}
-                />
-              )
-            ) : generatedVibe ? (
-              <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-                <pre className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-mono overflow-x-auto">
-                  {generatedVibe}
-                </pre>
-              </div>
-            ) : (
-              <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-                <p className="text-gray-400 text-center">
-                  Failed to generate vibe code. You can create one
-                  manually using the format in our documentation.
-                </p>
-              </div>
-            )}
           </div>
 
-          <div className="flex justify-center pt-6 border-t border-gray-700 mt-6">
+          <div className="bg-amber-900/20 rounded-lg p-4 border border-amber-500/30 mb-6">
+            <p className="text-amber-200 text-sm">
+              <strong>⚠️ Important:</strong> Complete payment within 24 hours to secure your spot!
+            </p>
+          </div>
+
+          <div className="text-center">
             <button
               onClick={onClose}
-              className="btn-primary"
-              style={{
-                background:
-                  'linear-gradient(to right, #059669, #10b981)',
-                padding: '0.75rem 2rem',
-                borderRadius: '0.5rem',
-                fontSize: '0.875rem',
-                fontWeight: '600',
-                border: 'none',
-                cursor: 'pointer',
-                color: 'white',
-              }}
+              className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-200 hover:shadow-lg"
             >
               Close
             </button>
@@ -616,6 +541,21 @@ export default function SignupForm({
                     {errors.company}
                   </p>
                 )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1 sm:mb-2">
+                  Job Title (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={formData.jobTitle}
+                  onChange={(e) =>
+                    handleInputChange('jobTitle', e.target.value)
+                  }
+                  className="w-full px-3 sm:px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-base"
+                  placeholder="Your current job title"
+                />
               </div>
             </div>
           )}

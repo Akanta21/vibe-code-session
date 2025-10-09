@@ -5,6 +5,7 @@ import {
   checkDuplicateSubmission,
 } from '@/lib/spam-detection';
 import { sendPaymentEmail } from '@/lib/email';
+import { generateVibeCode } from '@/lib/generate-vibe';
 
 // Rate limiting: 3 submissions per 5 minutes per IP
 const rateLimit = createRateLimit({
@@ -14,6 +15,18 @@ const rateLimit = createRateLimit({
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if signups are disabled
+    if (process.env.SIGNUPS_DISABLED === 'true') {
+      return NextResponse.json(
+        {
+          error: 'signups_closed',
+          message:
+            'Registration is currently closed. Thank you for your interest!',
+        },
+        { status: 423 }
+      );
+    }
+
     // Apply rate limiting
     const rateLimitResult = await rateLimit(request);
     if (!rateLimitResult.allowed) {
@@ -77,6 +90,7 @@ export async function POST(request: NextRequest) {
       email: formData.email,
       phone: formData.phone,
       company: formData.company,
+      jobTitle: formData.jobTitle,
       linkedinProfile: formData.linkedinProfile,
       hasExperience: formData.hasExperience,
       toolsUsed: formData.toolsUsed,
@@ -104,6 +118,7 @@ export async function POST(request: NextRequest) {
             email: registrationData.email,
             phone: registrationData.phone,
             company: registrationData.company || 'Not specified',
+            job_title: registrationData.jobTitle || 'Not specified',
             registration_time: registrationData.timestamp,
             event_title: 'Vibe Coding Nov 2025',
             event_date: '2025-11-06',
@@ -131,15 +146,36 @@ export async function POST(request: NextRequest) {
       // Continue with registration process even if webhook fails
     }
 
-    const encodedData = Buffer.from(
-      JSON.stringify(registrationData)
-    ).toString('base64');
+    // const encodedData = Buffer.from(
+    //   JSON.stringify(registrationData)
+    // ).toString('base64');
 
-    // Send payment email immediately to participant
+    // Generate vibe code first
+    let vibeCode = '';
     try {
-      await sendPaymentEmail(registrationData);
+      const vibeResult = await generateVibeCode({
+        projectIdea: formData.projectIdea,
+        hasExperience: formData.hasExperience,
+        toolsUsed: formData.toolsUsed,
+        name: formData.name,
+      });
+
+      if (vibeResult.success) {
+        vibeCode = vibeResult.vibeCode || '';
+        console.log('Vibe code generated successfully');
+      } else {
+        console.error('Failed to generate vibe code:', vibeResult.error);
+      }
+    } catch (vibeError) {
+      console.error('Error generating vibe code:', vibeError);
+      // Continue without vibe code
+    }
+
+    // Send payment email with vibe code to participant
+    try {
+      await sendPaymentEmail({ ...registrationData, vibeCode });
       console.log(
-        'Payment email sent immediately to:',
+        'Payment email with vibe code sent to:',
         formData.email
       );
     } catch (emailError) {
@@ -158,6 +194,11 @@ export async function POST(request: NextRequest) {
 🏢 <b>Company:</b> ${formData.company}`
         : ''
     }${
+      formData.jobTitle
+        ? `
+💼 <b>Job Title:</b> ${formData.jobTitle}`
+        : ''
+    }${
       formData.linkedinProfile
         ? `
 🔗 <b>LinkedIn:</b> ${formData.linkedinProfile}`
@@ -174,7 +215,7 @@ export async function POST(request: NextRequest) {
 💰 <b>Payment:</b> $10 SGD
 📅 <b>Submitted:</b> ${new Date().toLocaleString()}
 
-✅ <b>Payment email sent to participant!</b>`
+✅ <b>Payment email sent to participant!</b>`;
 
     // Create inline keyboard with action buttons
     const inlineKeyboard = {
