@@ -178,15 +178,6 @@ export default function Home() {
                   ? '💫 Join the Vibe'
                   : '❌ Registration Closed'}
               </button>
-              <p
-                className={`text-sm mt-3 font-medium ${
-                  signupsEnabled ? 'text-green-400' : 'text-red-400'
-                }`}
-              >
-                {signupsEnabled
-                  ? '✨ Early Bird Pricing Available'
-                  : signupMessage}
-              </p>
             </div>
           </div>
 
@@ -467,15 +458,6 @@ export default function Home() {
                   ? '💡 Secure Your Spot - $10'
                   : '❌ Registration Closed'}
               </button>
-              <p
-                className={`text-sm mt-3 ${
-                  signupsEnabled ? 'text-green-400' : 'text-red-400'
-                }`}
-              >
-                {signupsEnabled
-                  ? '🔥 Early bird pricing • Only 20 spots available'
-                  : signupMessage}
-              </p>
             </div>
           </div>
 

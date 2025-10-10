@@ -317,7 +317,6 @@ export default function SignupForm({
     }
   };
 
-
   if (submitStatus === 'success') {
     return (
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -330,7 +329,8 @@ export default function SignupForm({
               Registration Complete!
             </h3>
             <p className="text-gray-300 mb-4 text-sm sm:text-base leading-relaxed">
-              Hi {submittedName}! Your registration has been processed successfully.
+              Hi {submittedName}! Your registration has been processed
+              successfully.
             </p>
           </div>
 
@@ -340,15 +340,27 @@ export default function SignupForm({
               Check Your Email
             </h4>
             <div className="text-gray-300 text-sm leading-relaxed space-y-2">
-              <p>• <strong>Payment instructions</strong> with PayNow QR code</p>
-              <p>• <strong>Calendar invite</strong> for the event</p>
-              <p>• <strong>Your personalized AI-generated vibe code</strong> (.md file)</p>
+              <p>
+                • <strong>Payment instructions</strong> with PayNow QR
+                code
+              </p>
+              <p>
+                • <strong>Calendar invite</strong> for the event
+              </p>
+              <p>
+                •{' '}
+                <strong>
+                  Your personalized AI-generated vibe code
+                </strong>{' '}
+                (.md file)
+              </p>
             </div>
           </div>
 
           <div className="bg-amber-900/20 rounded-lg p-4 border border-amber-500/30 mb-6">
             <p className="text-amber-200 text-sm">
-              <strong>⚠️ Important:</strong> Complete payment within 24 hours to secure your spot!
+              <strong>⚠️ Important:</strong> Complete payment within
+              24 hours to secure your spot!
             </p>
           </div>
 
@@ -518,10 +530,24 @@ export default function SignupForm({
                   </p>
                 )}
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1 sm:mb-2">
+                  Current or Most Recent Job Title
+                </label>
+                <input
+                  type="text"
+                  value={formData.jobTitle}
+                  onChange={(e) =>
+                    handleInputChange('jobTitle', e.target.value)
+                  }
+                  className="w-full px-3 sm:px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-base"
+                  placeholder="Your current job title"
+                />
+              </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1 sm:mb-2">
-                  Company/Organization (Optional)
+                  Current or Previous Company/Organization
                 </label>
                 <input
                   type="text"
@@ -541,21 +567,6 @@ export default function SignupForm({
                     {errors.company}
                   </p>
                 )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1 sm:mb-2">
-                  Job Title (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={formData.jobTitle}
-                  onChange={(e) =>
-                    handleInputChange('jobTitle', e.target.value)
-                  }
-                  className="w-full px-3 sm:px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-base"
-                  placeholder="Your current job title"
-                />
               </div>
             </div>
           )}
@@ -751,13 +762,6 @@ export default function SignupForm({
                       {errors.linkedinProfile}
                     </p>
                   )}
-                  <p className="text-gray-400 text-xs mt-1 leading-relaxed">
-                    💡 Auto-generated from your name - edit as needed
-                    <br className="sm:hidden" />
-                    <span className="hidden sm:inline"> | </span>📋
-                    Will be included in your event namecard for
-                    networking
-                  </p>
                 </div>
               </div>
 
@@ -789,7 +793,7 @@ export default function SignupForm({
               </div>
               <p className="text-gray-300 text-xs sm:text-sm leading-relaxed">
                 Payment details will be sent to you after registration
-                review. Includes meals, swag, and networking!
+                review. Includes meals and fun workshop!
               </p>
             </div>
 
@@ -834,8 +838,8 @@ export default function SignupForm({
                   border: 'none',
                   cursor: isSubmitting ? 'not-allowed' : 'pointer',
                   color: 'white',
-                  boxShadow: isSubmitting 
-                    ? 'none' 
+                  boxShadow: isSubmitting
+                    ? 'none'
                     : '0 4px 15px rgba(16, 185, 129, 0.3), 0 0 20px rgba(5, 150, 105, 0.2)',
                 }}
               >
@@ -843,17 +847,21 @@ export default function SignupForm({
                 {!isSubmitting && (
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 animate-shimmer" />
                 )}
-                
+
                 {isSubmitting ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-2 border-white border-t-transparent mr-2 sm:mr-3"></div>
-                    <span className="hidden sm:inline">Processing Registration...</span>
+                    <span className="hidden sm:inline">
+                      Processing Registration...
+                    </span>
                     <span className="sm:hidden">Processing...</span>
                   </>
                 ) : currentStep === totalSteps ? (
                   <>
                     <span className="mr-2 text-lg">🚀</span>
-                    <span className="hidden sm:inline">Register for Vibe Coding</span>
+                    <span className="hidden sm:inline">
+                      Register for Vibe Coding
+                    </span>
                     <span className="sm:hidden">Register Now</span>
                   </>
                 ) : (
