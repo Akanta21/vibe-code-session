@@ -128,10 +128,16 @@ export async function POST(request: NextRequest) {
       );
 
       if (!webhookResponse.ok) {
+        const errorText = await webhookResponse.text();
         console.error(
           'Vibing webhook failed:',
           webhookResponse.status,
-          webhookResponse.statusText
+          webhookResponse.statusText,
+          errorText
+        );
+        return NextResponse.json(
+          { error: 'signups_closed' },
+          { status: 500 }
         );
       } else {
         console.log(
@@ -143,7 +149,9 @@ export async function POST(request: NextRequest) {
         'Error calling vibing webhook for new registration:',
         webhookError
       );
-      // Continue with registration process even if webhook fails
+      throw new Error(
+        `Failed to call vibing webhook: ${webhookError instanceof Error ? webhookError.message : String(webhookError)}`
+      );
     }
 
     // const encodedData = Buffer.from(
@@ -164,7 +172,10 @@ export async function POST(request: NextRequest) {
         vibeCode = vibeResult.vibeCode || '';
         console.log('Vibe code generated successfully');
       } else {
-        console.error('Failed to generate vibe code:', vibeResult.error);
+        console.error(
+          'Failed to generate vibe code:',
+          vibeResult.error
+        );
       }
     } catch (vibeError) {
       console.error('Error generating vibe code:', vibeError);

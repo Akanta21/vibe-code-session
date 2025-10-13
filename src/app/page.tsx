@@ -330,7 +330,7 @@ export default function Home() {
                 <div className="flex items-center justify-between">
                   <span className="text-gray-300">Spots</span>
                   <span className="text-green-400 font-medium">
-                    40 Limited
+                    20 Limited
                   </span>
                 </div>
               </div>
