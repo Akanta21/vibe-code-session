@@ -125,7 +125,7 @@ export default function Home() {
                   <div className="text-purple-400 font-semibold mb-1">
                     📅 Date & Time
                   </div>
-                  <div className="text-gray-200">Nov 6, 2025</div>
+                  <div className="text-gray-200">Nov 13, 2025</div>
                   <div className="text-gray-300 text-sm">
                     6:30 PM - 9:00 PM
                   </div>
@@ -306,7 +306,7 @@ export default function Home() {
                 <div className="flex items-center justify-between">
                   <span className="text-gray-300">Date</span>
                   <span className="text-purple-400 font-medium">
-                    Nov 6, 2025
+                    Nov 13, 2025
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
